@@ -3,8 +3,6 @@
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-darkgreen?logo=mongodb)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
-![Status](https://img.shields.io/badge/status-Active-success)
 
 > ✨ **Kostong** adalah Website penyedia kost berbasis **Flutter Web** dengan backend **Node.js + Express + MongoDB**.  
 
