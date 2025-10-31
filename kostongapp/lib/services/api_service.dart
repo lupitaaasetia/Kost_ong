@@ -44,7 +44,6 @@ class ApiService {
           'data': body['data'],
         };
       } else {
-        // try decode error message
         try {
           final body = jsonDecode(res.body);
           return {'success': false, 'message': body['message'] ?? res.body};
@@ -77,7 +76,68 @@ class ApiService {
     }
   }
 
-  // Endpoints to fetch lists (adjust names to work with your backend)
+  // =========================
+  // CRUD UNIVERSAL FUNCTIONS
+  // =========================
+  static Future<Map<String, dynamic>> fetchCollection(String token, String type) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/$type'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> createData(String token, String type, Map<String, dynamic> data) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/$type'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(data),
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateData(String token, String type, String id, Map<String, dynamic> data) async {
+    try {
+      final res = await http.put(
+        Uri.parse('$baseUrl/$type/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(data),
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteData(String token, String type, String id) async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$baseUrl/$type/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // =========================
+  // Predefined fetches
+  // =========================
   static Future<Map<String, dynamic>> fetchKost([String? token]) => _getJson('/kost', token);
   static Future<Map<String, dynamic>> fetchBooking([String? token]) => _getJson('/booking', token);
   static Future<Map<String, dynamic>> fetchUsers([String? token]) => _getJson('/users', token);
