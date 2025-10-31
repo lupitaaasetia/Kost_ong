@@ -1,4 +1,4 @@
-# 🏠 Kostong - Web Penyedia Daftar Kost
+# 🏠 Kostong - Web Penyedia Kost
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)
