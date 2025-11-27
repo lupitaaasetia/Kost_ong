@@ -1,16 +1,13 @@
-// minimal API service for web + other platforms
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
 
 class ApiService {
-  // auto base url (web: localhost)
   static String get baseUrl {
     if (kIsWeb) {
       return 'http://localhost:3000/api';
     } else {
-      // for non-web use emulator default for convenience
       try {
         if (Platform.isAndroid) return 'http://10.0.2.2:3000/api';
         if (Platform.isIOS) return 'http://127.0.0.1:3000/api';
@@ -28,11 +25,18 @@ class ApiService {
   }
 
   // LOGIN
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     final url = Uri.parse('$baseUrl/users/login');
     try {
       final res = await http
-          .post(url, headers: _headers(), body: jsonEncode({'email': email, 'password': password}))
+          .post(
+            url,
+            headers: _headers(),
+            body: jsonEncode({'email': email, 'password': password}),
+          )
           .timeout(_timeout);
 
       if (res.statusCode == 200) {
@@ -42,13 +46,64 @@ class ApiService {
           'message': body['message'] ?? '',
           'token': body['token'],
           'data': body['data'],
+          'role': body['data']?['role'] ?? 'pencari', // Get role from response
         };
       } else {
         try {
           final body = jsonDecode(res.body);
           return {'success': false, 'message': body['message'] ?? res.body};
         } catch (_) {
-          return {'success': false, 'message': 'Server error ${res.statusCode}'};
+          return {
+            'success': false,
+            'message': 'Server error ${res.statusCode}',
+          };
+        }
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // REGISTER
+  static Future<Map<String, dynamic>> register(
+    String namaLengkap,
+    String email,
+    String password,
+    String telepon,
+    String role,
+  ) async {
+    final url = Uri.parse('$baseUrl/users/register');
+    try {
+      final res = await http
+          .post(
+            url,
+            headers: _headers(),
+            body: jsonEncode({
+              'nama_lengkap': namaLengkap,
+              'email': email,
+              'password': password,
+              'telepon': telepon,
+              'role': role,
+            }),
+          )
+          .timeout(_timeout);
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final body = jsonDecode(res.body);
+        return {
+          'success': body['success'] ?? true,
+          'message': body['message'] ?? 'Registrasi berhasil',
+          'data': body['data'],
+        };
+      } else {
+        try {
+          final body = jsonDecode(res.body);
+          return {'success': false, 'message': body['message'] ?? res.body};
+        } catch (_) {
+          return {
+            'success': false,
+            'message': 'Server error ${res.statusCode}',
+          };
         }
       }
     } catch (e) {
@@ -57,12 +112,31 @@ class ApiService {
   }
 
   // Generic GET checker
-  static Future<Map<String, dynamic>> _getJson(String endpoint, [String? token]) async {
+  static Future<Map<String, dynamic>> _getJson(
+    String endpoint, [
+    String? token,
+  ]) async {
     final url = Uri.parse('$baseUrl$endpoint');
     try {
-      final res = await http.get(url, headers: _headers(token)).timeout(_timeout);
+      final res = await http
+          .get(url, headers: _headers(token))
+          .timeout(_timeout);
       if (res.statusCode == 200) {
-        return {'success': true, 'data': jsonDecode(res.body)};
+        final body = jsonDecode(res.body);
+        // Handle both array response and object with data property
+        if (body is List) {
+          return {'success': true, 'data': body};
+        } else if (body is Map && body.containsKey('data')) {
+          return {'success': true, 'data': body['data']};
+        } else {
+          return {'success': true, 'data': body};
+        }
+      } else if (res.statusCode == 401) {
+        return {
+          'success': false,
+          'message': 'Unauthorized',
+          'requiresLogin': true,
+        };
       } else {
         try {
           final body = jsonDecode(res.body);
@@ -79,19 +153,38 @@ class ApiService {
   // =========================
   // CRUD UNIVERSAL FUNCTIONS
   // =========================
-  static Future<Map<String, dynamic>> fetchCollection(String token, String type) async {
+  static Future<Map<String, dynamic>> fetchCollection(
+    String token,
+    String type,
+  ) async {
     try {
       final res = await http.get(
         Uri.parse('$baseUrl/$type'),
         headers: {'Authorization': 'Bearer $token'},
       );
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body is List) {
+          return {'success': true, 'data': body};
+        } else if (body is Map && body.containsKey('data')) {
+          return {'success': true, 'data': body['data']};
+        } else {
+          return {'success': true, 'data': body};
+        }
+      }
+
       return jsonDecode(res.body);
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }
   }
 
-  static Future<Map<String, dynamic>> createData(String token, String type, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createData(
+    String token,
+    String type,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final res = await http.post(
         Uri.parse('$baseUrl/$type'),
@@ -107,7 +200,12 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateData(String token, String type, String id, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateData(
+    String token,
+    String type,
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final res = await http.put(
         Uri.parse('$baseUrl/$type/$id'),
@@ -123,7 +221,11 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> deleteData(String token, String type, String id) async {
+  static Future<Map<String, dynamic>> deleteData(
+    String token,
+    String type,
+    String id,
+  ) async {
     try {
       final res = await http.delete(
         Uri.parse('$baseUrl/$type/$id'),
@@ -138,13 +240,22 @@ class ApiService {
   // =========================
   // Predefined fetches
   // =========================
-  static Future<Map<String, dynamic>> fetchKost([String? token]) => _getJson('/kost', token);
-  static Future<Map<String, dynamic>> fetchBooking([String? token]) => _getJson('/booking', token);
-  static Future<Map<String, dynamic>> fetchUsers([String? token]) => _getJson('/users', token);
-  static Future<Map<String, dynamic>> fetchNotifikasi([String? token]) => _getJson('/notifikasi', token);
-  static Future<Map<String, dynamic>> fetchFavorit([String? token]) => _getJson('/favorit', token);
-  static Future<Map<String, dynamic>> fetchRiwayat([String? token]) => _getJson('/riwayat', token);
-  static Future<Map<String, dynamic>> fetchReview([String? token]) => _getJson('/review', token);
-  static Future<Map<String, dynamic>> fetchPembayaran([String? token]) => _getJson('/pembayaran', token);
-  static Future<Map<String, dynamic>> fetchKontrak([String? token]) => _getJson('/kontrak', token);
+  static Future<Map<String, dynamic>> fetchKost([String? token]) =>
+      _getJson('/kost', token);
+  static Future<Map<String, dynamic>> fetchBooking([String? token]) =>
+      _getJson('/booking', token);
+  static Future<Map<String, dynamic>> fetchUsers([String? token]) =>
+      _getJson('/users', token);
+  static Future<Map<String, dynamic>> fetchNotifikasi([String? token]) =>
+      _getJson('/notifikasi', token);
+  static Future<Map<String, dynamic>> fetchFavorit([String? token]) =>
+      _getJson('/favorit', token);
+  static Future<Map<String, dynamic>> fetchRiwayat([String? token]) =>
+      _getJson('/riwayat', token);
+  static Future<Map<String, dynamic>> fetchReview([String? token]) =>
+      _getJson('/review', token);
+  static Future<Map<String, dynamic>> fetchPembayaran([String? token]) =>
+      _getJson('/pembayaran', token);
+  static Future<Map<String, dynamic>> fetchKontrak([String? token]) =>
+      _getJson('/kontrak', token);
 }

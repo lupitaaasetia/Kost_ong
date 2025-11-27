@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/owner_home_screen.dart';
+import 'screens/pencari_home_screen.dart';
 
 void main() {
-  runApp(KostongApp());
+  runApp(MyApp());
 }
 
-class KostongApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kostong (Web)',
+      title: 'Kostong',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: 'Roboto',
       ),
-      routes: {
-        '/': (_) => LoginScreen(),
-        '/home': (_) => HomeScreen(),
-      },
       initialRoute: '/',
+      routes: {
+        '/': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen(),
+        '/owner-home': (context) => OwnerHomeScreen(),
+        '/seeker-home': (context) => SeekerHomeScreen(),
+      },
     );
   }
 }
