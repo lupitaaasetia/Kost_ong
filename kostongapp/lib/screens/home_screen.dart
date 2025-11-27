@@ -29,11 +29,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: Duration(milliseconds: 300),
       vsync: this,
     );
-    
-  _autoRefreshTimer = Timer.periodic(Duration(minutes: 5), (timer) {
-    if (mounted) _loadAll(showLoading: false);
-  });
-}
+
+    _autoRefreshTimer = Timer.periodic(Duration(minutes: 5), (timer) {
+      if (mounted) _loadAll(showLoading: false);
+    });
+  }
 
   @override
   void dispose() {
@@ -54,7 +54,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
       if (args != null && args['data'] != null) {
         final userData = args['data'] as Map<String, dynamic>?;
-        userName = userData?['nama_lengkap'] ??
+        userName =
+            userData?['nama_lengkap'] ??
             userData?['name'] ??
             userData?['email'];
       }
@@ -703,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       'title',
       'judul',
       'nama_kost',
-      'nama_pemesan'
+      'nama_pemesan',
     ];
     for (var field in titleFields) {
       if (item.containsKey(field) && item[field] != null) {
@@ -737,7 +738,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (item.containsKey('tanggal') && item['tanggal'] != null) {
       badges.add(item['tanggal'].toString());
     }
-    if (item.containsKey('tanggal_booking') && item['tanggal_booking'] != null) {
+    if (item.containsKey('tanggal_booking') &&
+        item['tanggal_booking'] != null) {
       badges.add(item['tanggal_booking'].toString());
     }
     if (item.containsKey('durasi') && item['durasi'] != null) {
@@ -818,9 +820,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return key
         .replaceAll('_', ' ')
         .split(' ')
-        .map((word) => word.isEmpty
-            ? ''
-            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .map(
+          (word) => word.isEmpty
+              ? ''
+              : word[0].toUpperCase() + word.substring(1).toLowerCase(),
+        )
         .join(' ');
   }
 
@@ -856,10 +860,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 child: Text(
                   entry.value?.toString() ?? '-',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[800],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                 ),
               ),
             ],
@@ -880,13 +881,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (listData is List && listData.isNotEmpty) {
       if (listData.first is Map<String, dynamic>) {
         // Hapus 'id' atau 'created_at' agar tidak diisi manual
-        return (listData.first as Map<String, dynamic>)
-            .keys
-            .where((k) =>
-                k != 'id' &&
-                k != 'created_at' &&
-                k != 'updated_at' &&
-                k != 'id_user')
+        return (listData.first as Map<String, dynamic>).keys
+            .where(
+              (k) =>
+                  k != 'id' &&
+                  k != 'created_at' &&
+                  k != 'updated_at' &&
+                  k != 'id_user',
+            )
             .toList();
       }
     }
@@ -928,12 +930,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     for (var field in fields) {
       if (field == 'status' || field == 'tipe_kamar' || field == 'fasilitas') {
         // Dropdown fields
-        dropdownValues[field] =
-            item != null && item is Map ? item[field]?.toString() : null;
+        dropdownValues[field] = item != null && item is Map
+            ? item[field]?.toString()
+            : null;
       } else {
         // Text fields
         controllers[field] = TextEditingController(
-          text: item != null && item is Map ? item[field]?.toString() ?? '' : '',
+          text: item != null && item is Map
+              ? item[field]?.toString() ?? ''
+              : '',
         );
       }
     }
@@ -958,7 +963,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         color: color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(isEdit ? Icons.edit : Icons.add, color: color),
+                      child: Icon(
+                        isEdit ? Icons.edit : Icons.add,
+                        color: color,
+                      ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
@@ -1025,19 +1033,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 filled: true,
                                 fillColor: Colors.grey[50],
                               ),
-                              items: [
-                                'WiFi',
-                                'Parkir',
-                                'Dapur',
-                                'Laundry',
-                                'TV',
-                                'Lemari'
-                              ].map((fas) {
-                                return DropdownMenuItem(
-                                  value: fas,
-                                  child: Text(fas),
-                                );
-                              }).toList(),
+                              items:
+                                  [
+                                    'WiFi',
+                                    'Parkir',
+                                    'Dapur',
+                                    'Laundry',
+                                    'TV',
+                                    'Lemari',
+                                  ].map((fas) {
+                                    return DropdownMenuItem(
+                                      value: fas,
+                                      child: Text(fas),
+                                    );
+                                  }).toList(),
                               onChanged: (value) {
                                 setDialogState(() {
                                   dropdownValues[field] = value;
@@ -1059,18 +1068,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 filled: true,
                                 fillColor: Colors.grey[50],
                               ),
-                              keyboardType: (field == 'harga' ||
+                              keyboardType:
+                                  (field == 'harga' ||
                                       field == 'durasi' ||
                                       field.contains('id'))
                                   ? TextInputType.number
                                   : (field == 'email')
-                                      ? TextInputType.emailAddress
-                                      : (field == 'alamat' ||
-                                              field == 'deskripsi')
-                                          ? TextInputType.multiline
-                                          : TextInputType.text,
-                              maxLines: (field == 'alamat' ||
-                                      field == 'deskripsi')
+                                  ? TextInputType.emailAddress
+                                  : (field == 'alamat' || field == 'deskripsi')
+                                  ? TextInputType.multiline
+                                  : TextInputType.text,
+                              maxLines:
+                                  (field == 'alamat' || field == 'deskripsi')
                                   ? 3
                                   : 1,
                             ),
@@ -1108,7 +1117,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -1130,12 +1139,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ],
         ),
         content: Text(
-            'Anda yakin ingin menghapus item "${_getDisplayData(item)['title']}"? Tindakan ini tidak dapat dibatalkan.'),
+          'Anda yakin ingin menghapus item "${_getDisplayData(item)['title']}"? Tindakan ini tidak dapat dibatalkan.',
+        ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: Text('Batal'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(c), child: Text('Batal')),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(c); // Tutup dialog konfirmasi
@@ -1156,7 +1163,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // --- STUB FUNCTIONS (PERLU DILENGKAPI) ---
 
   Future<void> _handleSave(
-      String key, Map<String, dynamic> data, dynamic oldItem) async {
+    String key,
+    Map<String, dynamic> data,
+    dynamic oldItem,
+  ) async {
     final isEdit = oldItem != null;
     print('--- SAVING DATA ---');
     print('Key: $key');
@@ -1235,10 +1245,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () => _loadAll(),
-          ),
+          IconButton(icon: Icon(Icons.refresh), onPressed: () => _loadAll()),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () {
