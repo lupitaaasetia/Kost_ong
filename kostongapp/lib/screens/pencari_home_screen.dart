@@ -192,7 +192,8 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200,
+            // PERBAIKAN: Menaikkan tinggi expandedHeight agar tidak ada garis polisi
+            expandedHeight: 280, 
             floating: false,
             pinned: true,
             backgroundColor: Color(0xFF4facfe),
@@ -205,56 +206,60 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 60, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Halo, ${userName ?? 'Pencari Kost'}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                // PERBAIKAN: Menggunakan SafeArea agar tidak tertutup notch HP
+                child: SafeArea( 
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Halo, ${userName ?? 'Pencari Kost'}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Temukan kost impian Anda',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                      SizedBox(height: 20),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
+                        SizedBox(height: 8),
+                        Text(
+                          'Temukan kost impian Anda',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
-                        child: TextField(
-                          onChanged: (value) {
-                            setState(() => _searchQuery = value);
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Cari kost...',
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Color(0xFF4facfe),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
+                        SizedBox(height: 20),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Cari kost...',
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Color(0xFF4facfe),
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -264,6 +269,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
             padding: EdgeInsets.all(16),
             sliver: filteredKost.isEmpty
                 ? SliverFillRemaining(
+                    hasScrollBody: false, 
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -342,7 +348,6 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                           color: Color(0xFF4facfe),
                         ),
                         onPressed: () {
-                          // TODO: Add to favorites
                           _showSnackBar('Ditambahkan ke favorit');
                         },
                       ),
