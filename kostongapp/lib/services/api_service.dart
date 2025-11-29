@@ -246,8 +246,6 @@ class ApiService {
       _getJson('/booking', token);
   static Future<Map<String, dynamic>> fetchUsers([String? token]) =>
       _getJson('/users', token);
-  static Future<Map<String, dynamic>> fetchNotifikasi([String? token]) =>
-      _getJson('/notifikasi', token);
   static Future<Map<String, dynamic>> fetchFavorit([String? token]) =>
       _getJson('/favorit', token);
   static Future<Map<String, dynamic>> fetchRiwayat([String? token]) =>

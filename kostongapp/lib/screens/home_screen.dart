@@ -89,7 +89,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ApiService.fetchKost(token),
       ApiService.fetchBooking(token),
       ApiService.fetchUsers(token),
-      ApiService.fetchNotifikasi(token),
       ApiService.fetchFavorit(token),
       ApiService.fetchRiwayat(token),
       ApiService.fetchReview(token),
@@ -101,7 +100,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       'kost',
       'booking',
       'users',
-      'notifikasi',
       'favorit',
       'riwayat',
       'review',
@@ -171,8 +169,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return Icons.event_note_rounded;
       case 'users':
         return Icons.people_rounded;
-      case 'notifikasi':
-        return Icons.notifications_rounded;
       case 'favorit':
         return Icons.favorite_rounded;
       case 'riwayat':
@@ -1160,67 +1156,60 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // --- STUB FUNCTIONS (PERLU DILENGKAPI) ---
-
   Future<void> _handleSave(
     String key,
     Map<String, dynamic> data,
     dynamic oldItem,
   ) async {
     final isEdit = oldItem != null;
-    print('--- SAVING DATA ---');
-    print('Key: $key');
-    print('IsEdit: $isEdit');
-    print('Data: $data');
-    if (isEdit) {
-      print('Old Item ID: ${oldItem['id']}');
-    }
+    if (token == null) return;
 
-    // TODO: Implementasikan logika API Anda di sini
-    // GANTI KODE DI BAWAH INI DENGAN API SERVICE ANDA
+    // Remove non-editable fields
+    data.remove('id');
+    data.remove('_id');
+    data.remove('created_at');
+    data.remove('updated_at');
 
     try {
-      if (isEdit) {
-        // final response = await ApiService.update(key, oldItem['id'], data, token);
-        // if (response['success']) ...
+      final result = isEdit
+          ? await ApiService.updateData(token!, key, oldItem['_id'], data)
+          : await ApiService.createData(token!, key, data);
+
+      if (result['success'] == true) {
+        _showSnackBar(
+          'Data ${isEdit ? 'berhasil diperbarui' : 'berhasil ditambahkan'}',
+        );
+        _loadAll(showLoading: false);
       } else {
-        // final response = await ApiService.create(key, data, token);
-        // if (response['success']) ...
+        _showSnackBar(result['message'] ?? 'Gagal menyimpan data', isError: true);
       }
-
-      // Tampilkan notifikasi sukses
-      _showSnackBar(
-        'Data ${isEdit ? 'berhasil diperbarui' : 'berhasil ditambahkan'}',
-      );
-
-      // Muat ulang data
-      _loadAll(showLoading: false);
     } catch (e) {
       _showSnackBar('Terjadi kesalahan: $e', isError: true);
     }
   }
 
   Future<void> _handleDelete(dynamic item, String key) async {
-    final id = item['id'];
-    print('--- DELETING DATA ---');
-    print('Key: $key');
-    print('Item ID: $id');
-
-    // TODO: Implementasikan logika API Anda di sini
-    // GANTI KODE DI BAWAH INI DENGAN API SERVICE ANDA
+    if (token == null || item == null || item['_id'] == null) return;
+    final id = item['_id'];
 
     try {
-      // final response = await ApiService.delete(key, id, token);
-      // if (response['success']) ...
-
-      // Tampilkan notifikasi sukses
-      _showSnackBar('Item berhasil dihapus');
-
-      // Muat ulang data
-      _loadAll(showLoading: false);
+      final result = await ApiService.deleteData(token!, key, id);
+      if (result['success'] == true) {
+        _showSnackBar('Item berhasil dihapus');
+        _loadAll(showLoading: false);
+      } else {
+        _showSnackBar(result['message'] ?? 'Gagal menghapus item', isError: true);
+      }
     } catch (e) {
       _showSnackBar('Terjadi kesalahan: $e', isError: true);
     }
+  }
+
+  void _logout() {
+    setState(() {
+      token = null;
+    });
+    Navigator.pushReplacementNamed(context, '/');
   }
 
   // --- METODE BUILD UTAMA ---
@@ -1248,10 +1237,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           IconButton(icon: Icon(Icons.refresh), onPressed: () => _loadAll()),
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: () {
-              // TODO: Tambahkan logika logout (hapus token, dll)
-              Navigator.pushReplacementNamed(context, '/');
-            },
+            onPressed: _logout,
           ),
         ],
         backgroundColor: Colors.white,

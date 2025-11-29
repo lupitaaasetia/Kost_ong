@@ -142,6 +142,13 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     );
   }
 
+  void _logout() {
+    setState(() {
+      token = null;
+    });
+    Navigator.pushReplacementNamed(context, '/');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,9 +167,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
           ),
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/');
-            },
+            onPressed: _logout,
           ),
         ],
         backgroundColor: Colors.white,

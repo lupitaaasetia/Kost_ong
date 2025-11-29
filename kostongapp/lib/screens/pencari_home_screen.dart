@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/profile_view_model.dart';
 import '../services/api_service.dart';
 import 'dart:async';
+import 'settings_screen.dart';
+import 'history_screen.dart';
 
 class SeekerHomeScreen extends StatefulWidget {
   @override
@@ -11,11 +15,13 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   bool loading = true;
   String? token;
   Map<String, dynamic> dataAll = {};
+  Map<String, dynamic>? userData;
   String? userName;
   Timer? _autoRefreshTimer;
   bool _isInit = true;
   int _selectedIndex = 0;
   String _searchQuery = '';
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
@@ -23,11 +29,18 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
     _autoRefreshTimer = Timer.periodic(Duration(minutes: 5), (timer) {
       if (mounted) _loadAll(showLoading: false);
     });
+    _searchController = TextEditingController();
+    _searchController.addListener(() {
+      if (!mounted) return;
+      final val = _searchController.text;
+      if (val != _searchQuery) setState(() => _searchQuery = val);
+    });
   }
 
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -41,7 +54,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
       token = args != null ? args['token'] as String? : null;
 
       if (args != null && args['data'] != null) {
-        final userData = args['data'] as Map<String, dynamic>?;
+        userData = args['data'] as Map<String, dynamic>?;
         userName =
             userData?['nama_lengkap'] ??
             userData?['name'] ??
@@ -149,14 +162,17 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                 ],
               ),
             )
-          : IndexedStack(
-              index: _selectedIndex,
-              children: [
-                _buildHomePage(),
-                _buildFavoritePage(),
-                _buildBookingPage(),
-                _buildProfilePage(),
-              ],
+          : ChangeNotifierProvider(
+              create: (_) => ProfileTabViewModel(userData),
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  _buildHomePage(),
+                  _buildFavoritePage(),
+                  _buildBookingPage(),
+                  ProfileTabPage(), // New Profile Tab Page
+                ],
+              ),
             ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -179,12 +195,12 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
 
   Widget _buildHomePage() {
     final kostList = dataAll['kost'] is List ? dataAll['kost'] as List : [];
+    final query = _searchQuery.trim().toLowerCase();
     final filteredKost = kostList.where((kost) {
-      if (_searchQuery.isEmpty) return true;
+      if (query.isEmpty) return true;
       final namaKost = kost['nama_kost']?.toString().toLowerCase() ?? '';
       final alamat = kost['alamat']?.toString().toLowerCase() ?? '';
-      return namaKost.contains(_searchQuery.toLowerCase()) ||
-          alamat.contains(_searchQuery.toLowerCase());
+      return namaKost.contains(query) || alamat.contains(query);
     }).toList();
 
     return RefreshIndicator(
@@ -192,7 +208,6 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
-            // PERBAIKAN: Menaikkan tinggi expandedHeight agar tidak ada garis polisi
             expandedHeight: 280, 
             floating: false,
             pinned: true,
@@ -206,7 +221,6 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                     end: Alignment.bottomRight,
                   ),
                 ),
-                // PERBAIKAN: Menggunakan SafeArea agar tidak tertutup notch HP
                 child: SafeArea( 
                   child: Padding(
                     padding: EdgeInsets.all(16),
@@ -241,8 +255,9 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                             ],
                           ),
                           child: TextField(
+                            controller: _searchController,
                             onChanged: (value) {
-                              setState(() => _searchQuery = value);
+                              if (value != _searchQuery) setState(() => _searchQuery = value);
                             },
                             decoration: InputDecoration(
                               hintText: 'Cari kost...',
@@ -284,7 +299,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                             'Tidak ada kost tersedia',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              color: const Color.fromARGB(255, 70, 179, 242),
                             ),
                           ),
                         ],
@@ -314,7 +329,6 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image placeholder
             Container(
               height: 180,
               decoration: BoxDecoration(
@@ -350,28 +364,6 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                         onPressed: () {
                           _showSnackBar('Ditambahkan ke favorit');
                         },
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 12,
-                    left: 12,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        kost['status']?.toString() ?? 'Tersedia',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
                       ),
                     ),
                   ),
@@ -413,42 +405,6 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF4facfe).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          kost['tipe_kamar']?.toString() ?? 'Tipe',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF4facfe),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Spacer(),
-                      Text(
-                        'Rp ${kost['harga']?.toString() ?? '0'}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4facfe),
-                        ),
-                      ),
-                      Text(
-                        '/bulan',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -457,13 +413,86 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
       ),
     );
   }
+  
+  Widget _buildFavoritePage() {
+    final favList = dataAll['favorit'] is List ? dataAll['favorit'] as List : [];
+
+    return RefreshIndicator(
+      onRefresh: () => _loadAll(showLoading: false),
+      child: favList.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: 120),
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.favorite_border, size: 72, color: Colors.grey[400]),
+                      SizedBox(height: 12),
+                      Text('Belum ada favorit', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: favList.length,
+              itemBuilder: (context, index) {
+                final k = favList[index];
+                return _buildKostCard(k);
+              },
+            ),
+    );
+  }
+
+  Widget _buildBookingPage() {
+    final bookingList = dataAll['booking'] is List ? dataAll['booking'] as List : [];
+
+    return RefreshIndicator(
+      onRefresh: () => _loadAll(showLoading: false),
+      child: bookingList.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: 120),
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.event_note_outlined, size: 72, color: Colors.grey[400]),
+                      SizedBox(height: 12),
+                      Text('Belum ada booking', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: bookingList.length,
+              separatorBuilder: (_, __) => SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final b = bookingList[index];
+                return Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: Icon(Icons.home, color: Color(0xFF4facfe)),
+                    title: Text(b['nama_kost']?.toString() ?? 'Kost'),
+                    subtitle: Text(b['tanggal']?.toString() ?? b['status']?.toString() ?? '-'),
+                    onTap: () => _showKostDetail(b),
+                  ),
+                );
+              },
+            ),
+    );
+  }
 
   void _showKostDetail(dynamic kost) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
+      builder: (builderContext) => DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
         maxChildSize: 0.95,
@@ -553,8 +582,14 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
+                            // Get the view model from the context of the main screen
+                            final viewModel = context.read<ProfileTabViewModel>();
+                            // Add the new transaction
+                            viewModel.addNewTransaction(kost);
+                            // Close the bottom sheet
                             Navigator.pop(context);
-                            _showSnackBar('Booking berhasil dibuat');
+                            // Show a confirmation message
+                            _showSnackBar('Booking berhasil ditambahkan ke riwayat transaksi.');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF4facfe),
@@ -608,198 +643,315 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
       ),
     );
   }
+}
 
-  Widget _buildFavoritePage() {
-    final favoritList = dataAll['favorit'] is List
-        ? dataAll['favorit'] as List
-        : [];
-
-    return RefreshIndicator(
-      onRefresh: () => _loadAll(showLoading: false),
-      child: favoritList.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.favorite_border,
-                    size: 80,
-                    color: Colors.grey[300],
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Belum ada favorit',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: favoritList.length,
-              itemBuilder: (context, index) {
-                final favorit = favoritList[index];
-                return _buildKostCard(favorit);
-              },
-            ),
-    );
-  }
-
-  Widget _buildBookingPage() {
-    final bookingList = dataAll['booking'] is List
-        ? dataAll['booking'] as List
-        : [];
-
-    return RefreshIndicator(
-      onRefresh: () => _loadAll(showLoading: false),
-      child: bookingList.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.event_note_outlined,
-                    size: 80,
-                    color: Colors.grey[300],
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Belum ada booking',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: bookingList.length,
-              itemBuilder: (context, index) {
-                final booking = bookingList[index];
-                return _buildBookingCard(booking);
-              },
-            ),
-    );
-  }
-
-  Widget _buildBookingCard(dynamic booking) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.home_work, color: Colors.white, size: 24),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        booking['nama_kost']?.toString() ?? 'Booking',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        booking['tanggal_booking']?.toString() ?? '-',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF4facfe).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    booking['status']?.toString() ?? 'Pending',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF4facfe),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+class ProfileTabPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.watch<ProfileTabViewModel>();
+    final isPrivate = viewModel.isProfilePrivate;
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Profil Saya'),
+        backgroundColor: Colors.white,
+        elevation: 1,
       ),
-    );
-  }
-
-  Widget _buildProfilePage() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
         children: [
-          SizedBox(height: 24),
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Color(0xFF4facfe),
-            child: Icon(Icons.person, size: 50, color: Colors.white),
+          // User Info Header
+          _buildUserInfo(context, viewModel.user),
+          const SizedBox(height: 24),
+          
+          // Navigation Tiles
+          _buildNavigationTile(
+            context,
+            title: 'Edit Data Pribadi',
+            icon: Icons.person_outline,
+            onTap: () {
+              final vm = context.read<ProfileTabViewModel>();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EditProfileScreen(viewModel: vm)),
+              );
+            },
           ),
-          SizedBox(height: 16),
-          Text(
-            userName ?? 'Pencari Kost',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          _buildNavigationTile(
+            context,
+            title: 'Pengaturan & Privasi',
+            icon: Icons.settings_outlined,
+            onTap: () {
+              final vm = context.read<ProfileTabViewModel>();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => SettingsScreen(viewModel: vm)),
+              );
+            },
           ),
-          SizedBox(height: 8),
-          Text('Pencari Kost', style: TextStyle(color: Colors.grey[600])),
-          SizedBox(height: 32),
-          _buildProfileMenuItem(Icons.person, 'Edit Profil', () {}),
-          _buildProfileMenuItem(Icons.history, 'Riwayat', () {}),
-          _buildProfileMenuItem(Icons.settings, 'Pengaturan', () {}),
-          _buildProfileMenuItem(Icons.help, 'Bantuan', () {}),
-          _buildProfileMenuItem(
-            Icons.logout,
-            'Keluar',
-            () => Navigator.pushReplacementNamed(context, '/'),
+          _buildNavigationTile(
+            context,
+            title: 'Riwayat Transaksi',
+            icon: Icons.history,
+            onTap: () {
+               final vm = context.read<ProfileTabViewModel>();
+               Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => HistoryScreen(viewModel: vm)),
+              );
+            },
+          ),
+          const Divider(),
+           _buildNavigationTile(
+            context,
+            title: 'Logout',
+            icon: Icons.logout,
             isDestructive: true,
+            onTap: () => _showLogoutDialog(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProfileMenuItem(
-    IconData icon,
-    String title,
-    VoidCallback onTap, {
-    bool isDestructive = false,
-  }) {
+  Widget _buildUserInfo(BuildContext context, UserProfile user) {
+    // Ambil viewModel untuk mengambil gender & tanggal yang tersimpan/terpilih
+    final vm = context.watch<ProfileTabViewModel>();
+    final gender = vm.selectedGender ?? '-';
+    final date = vm.selectedDate;
+    String formattedDate = '-';
+    if (date != null) {
+      final d = date is DateTime ? date : null;
+       if (d != null) formattedDate = '${d.day}/${d.month}/${d.year}';
+     }
+
+     return Center(
+       child: Column(
+         children: [
+           CircleAvatar(
+             radius: 50,
+             backgroundImage: NetworkImage(user.profileImageUrl),
+           ),
+           const SizedBox(height: 16),
+           Text(
+             user.fullName,
+             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+           ),
+           const SizedBox(height: 6),
+           Text(
+             user.email,
+             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+           ),
+           const SizedBox(height: 8),
+           // Gender & Tanggal Lahir
+           Row(
+             mainAxisSize: MainAxisSize.min,
+             children: [
+               Icon(Icons.person, size: 16, color: Colors.grey[600]),
+               const SizedBox(width: 6),
+               Text(gender, style: TextStyle(color: Colors.grey[700])),
+               const SizedBox(width: 12),
+               Icon(Icons.cake, size: 16, color: Colors.grey[600]),
+               const SizedBox(width: 6),
+               Text(formattedDate, style: TextStyle(color: Colors.grey[700])),
+             ],
+           ),
+         ],
+       ),
+     );
+   }
+  
+  Widget _buildNavigationTile(BuildContext context, {required String title, required IconData icon, required VoidCallback onTap, bool isDestructive = false}) {
+    final color = isDestructive ? Colors.red : Colors.grey[700];
     return Card(
-      margin: EdgeInsets.only(bottom: 8),
+      elevation: 0.5,
+      margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: isDestructive ? Colors.red : Color(0xFF4facfe),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(color: isDestructive ? Colors.red : Colors.black87),
-        ),
-        trailing: Icon(Icons.chevron_right),
+        leading: Icon(icon, color: color),
+        title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+        trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
+      ),
+    );
+  }
+  
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Anda yakin ingin logout?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Ya, Logout'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: () {
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// Tambahkan class EditProfileScreen untuk memperbaiki referensi yang belum terdefinisi
+class EditProfileScreen extends StatelessWidget {
+  final ProfileTabViewModel viewModel;
+  const EditProfileScreen({Key? key, required this.viewModel}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: viewModel,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Data Pribadi'),
+          backgroundColor: const Color.fromARGB(255, 96, 96, 96),
+        ),
+        body: Consumer<ProfileTabViewModel>(
+          builder: (context, vm, _) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ListView(
+              children: [
+                TextFormField(
+                  controller: vm.fullNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Lengkap',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: vm.phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Nomor Telepon',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: vm.emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Gender Picker - RadioListTile untuk pilihan yang lebih clean
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Jenis Kelamin', style: Theme.of(context).textTheme.bodyLarge),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('Laki-laki'),
+                            value: 'Laki-laki',
+                            groupValue: vm.selectedGender,
+                            onChanged: (val) => vm.setGender(val),
+                            contentPadding: EdgeInsets.zero,
+                            activeColor: const Color(0xFF4facfe),
+                            dense: true,
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('Perempuan'),
+                            value: 'Perempuan',
+                            groupValue: vm.selectedGender,
+                            onChanged: (val) => vm.setGender(val),
+                            contentPadding: EdgeInsets.zero,
+                            activeColor: const Color.fromARGB(255, 239, 79, 254),
+                            dense: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Tanggal Lahir Picker
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tanggal Lahir', style: Theme.of(context).textTheme.bodyLarge),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: vm.selectedDate ?? DateTime.now(),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                        if (pickedDate != null) {
+                          vm.setDate(pickedDate);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[400]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              vm.selectedDate == null
+                                  ? 'Pilih tanggal'
+                                  : '${vm.selectedDate!.day}/${vm.selectedDate!.month}/${vm.selectedDate!.year}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.calendar_today_outlined),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      vm.saveProfile();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Perubahan profil disimpan'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4facfe),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Simpan'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

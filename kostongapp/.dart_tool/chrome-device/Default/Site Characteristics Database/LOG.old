@@ -1,10 +1,14 @@
-2025/11/28-12:39:55.707 4c8c Log #3: 2 ops saved to Table #7 OK
-2025/11/28-12:39:55.716 4c8c Archiving C:\Users\mocha\AppData\Local\Temp\flutter_tools.a91ee170\flutter_tools_chrome_device.2dc6c5\Default\Site Characteristics Database/000003.log: OK
-2025/11/28-12:39:55.724 4c8c Log #6: 2 ops saved to Table #8 OK
-2025/11/28-12:39:55.727 4c8c Archiving C:\Users\mocha\AppData\Local\Temp\flutter_tools.a91ee170\flutter_tools_chrome_device.2dc6c5\Default\Site Characteristics Database/000006.log: OK
-2025/11/28-12:39:55.728 4c8c Table #4: 2 entries OK
-2025/11/28-12:39:55.728 4c8c Table #6: 2 entries OK
-2025/11/28-12:39:55.729 4c8c Table #7: 2 entries OK
-2025/11/28-12:39:55.729 4c8c Table #8: 2 entries OK
-2025/11/28-12:39:55.740 4c8c Archiving C:\Users\mocha\AppData\Local\Temp\flutter_tools.a91ee170\flutter_tools_chrome_device.2dc6c5\Default\Site Characteristics Database/MANIFEST-000001: OK
-2025/11/28-12:39:55.762 4c8c **** Repaired leveldb C:\Users\mocha\AppData\Local\Temp\flutter_tools.a91ee170\flutter_tools_chrome_device.2dc6c5\Default\Site Characteristics Database; recovered 4 files; 769 bytes. Some data may have been lost. ****
+2025/11/29-21:31:25.855 3ec4 Log #3: 2 ops saved to Table #12 OK
+2025/11/29-21:31:25.866 3ec4 Archiving C:\Users\cecek\AppData\Local\Temp\flutter_tools.ec482498\flutter_tools_chrome_device.a427c3d2\Default\Site Characteristics Database/000003.log: OK
+2025/11/29-21:31:25.875 3ec4 Log #6: 2 ops saved to Table #13 OK
+2025/11/29-21:31:25.886 3ec4 Archiving C:\Users\cecek\AppData\Local\Temp\flutter_tools.ec482498\flutter_tools_chrome_device.a427c3d2\Default\Site Characteristics Database/000006.log: OK
+2025/11/29-21:31:25.895 3ec4 Log #10: 1 ops saved to Table #14 OK
+2025/11/29-21:31:25.897 3ec4 Archiving C:\Users\cecek\AppData\Local\Temp\flutter_tools.ec482498\flutter_tools_chrome_device.a427c3d2\Default\Site Characteristics Database/000010.log: OK
+2025/11/29-21:31:25.899 3ec4 Table #4: 2 entries OK
+2025/11/29-21:31:25.900 3ec4 Table #6: 2 entries OK
+2025/11/29-21:31:25.900 3ec4 Table #11: 2 entries OK
+2025/11/29-21:31:25.901 3ec4 Table #12: 2 entries OK
+2025/11/29-21:31:25.902 3ec4 Table #13: 2 entries OK
+2025/11/29-21:31:25.902 3ec4 Table #14: 1 entries OK
+2025/11/29-21:31:25.913 3ec4 Archiving C:\Users\cecek\AppData\Local\Temp\flutter_tools.ec482498\flutter_tools_chrome_device.a427c3d2\Default\Site Characteristics Database/MANIFEST-000001: OK
+2025/11/29-21:31:25.932 3ec4 **** Repaired leveldb C:\Users\cecek\AppData\Local\Temp\flutter_tools.ec482498\flutter_tools_chrome_device.a427c3d2\Default\Site Characteristics Database; recovered 6 files; 1128 bytes. Some data may have been lost. ****

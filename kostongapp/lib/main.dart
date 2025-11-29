@@ -3,6 +3,8 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/owner_home_screen.dart';
 import 'screens/pencari_home_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/history_screen.dart';
 
 void main() {
   runApp(MyApp());
