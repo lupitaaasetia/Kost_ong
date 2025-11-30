@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/profile_view_model.dart';
 import '../services/api_service.dart';
+import '../widgets/responsive_searchbar.dart';
 import 'dart:async';
 import 'settings_screen.dart';
 import 'history_screen.dart';
@@ -21,6 +22,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   bool _isInit = true;
   int _selectedIndex = 0;
   String _searchQuery = '';
+  String _selectedCategory = '';
   late final TextEditingController _searchController;
 
   @override
@@ -170,7 +172,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                   _buildHomePage(),
                   _buildFavoritePage(),
                   _buildBookingPage(),
-                  ProfileTabPage(), // New Profile Tab Page
+                  ProfileTabPage(), 
                 ],
               ),
             ),
@@ -196,95 +198,147 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   Widget _buildHomePage() {
     final kostList = dataAll['kost'] is List ? dataAll['kost'] as List : [];
     final query = _searchQuery.trim().toLowerCase();
+    
     final filteredKost = kostList.where((kost) {
-      if (query.isEmpty) return true;
-      final namaKost = kost['nama_kost']?.toString().toLowerCase() ?? '';
-      final alamat = kost['alamat']?.toString().toLowerCase() ?? '';
-      return namaKost.contains(query) || alamat.contains(query);
+      // Filter berdasarkan pencarian text
+      if (query.isNotEmpty) {
+        final namaKost = kost['nama_kost']?.toString().toLowerCase() ?? '';
+        final alamat = kost['alamat']?.toString().toLowerCase() ?? '';
+        if (!namaKost.contains(query) && !alamat.contains(query)) return false;
+      }
+      
+      // Filter berdasarkan kategori
+      if (_selectedCategory.isNotEmpty) {
+        final tipeKost = kost['tipe_kost']?.toString() ?? '';
+        if (!tipeKost.contains(_selectedCategory)) return false;
+      }
+      
+      return true;
     }).toList();
 
     return RefreshIndicator(
       onRefresh: () => _loadAll(showLoading: false),
       child: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 280, 
-            floating: false,
-            pinned: true,
-            backgroundColor: Color(0xFF4facfe),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea( 
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Halo, ${userName ?? 'Pencari Kost'}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Temukan kost impian Anda',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        SizedBox(height: 20),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (value) {
-                              if (value != _searchQuery) setState(() => _searchQuery = value);
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Cari kost...',
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Color(0xFF4facfe),
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+          // --- BAGIAN INI TELAH DIUBAH (Warna Biru + Padding) ---
+          SliverToBoxAdapter(
+            child: Container(
+              padding: EdgeInsets.fromLTRB(32, 60, 32, 40), // Padding disesuaikan
+              color: Color(0xFF4facfe), // Background Biru
+              margin: EdgeInsets.only(bottom: 0), // Margin bawah dihilangkan agar menyatu
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Halo, ${userName ?? 'Pencari Kost'}',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white, // Teks Putih
                     ),
                   ),
-                ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Temukan kost impian Anda',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.white.withOpacity(0.9), // Teks Putih Transparan
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+          // -----------------------------------------------------
+
+          // SearchBar dengan Background
+          SliverToBoxAdapter(
+            child: Container(
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: ResponsiveSearchBar(
+                controller: _searchController,
+                onSearch: (value) {
+                  if (!mounted) return;
+                  setState(() => _searchQuery = value);
+                },
+                onCategorySelect: (category) {
+                  if (!mounted) return;
+                  setState(() {
+                    _selectedCategory = category;
+                    _searchController.clear();
+                    _searchQuery = '';
+                  });
+                },
+                onExplore: () {
+                  _showSnackBar('Menampilkan kost trending...');
+                },
+                onSchedule: () {
+                  _showSnackBar('Buka jadwal kunjungan...');
+                },
+                onFindLocation: () {
+                  _showSnackBar('Buka peta lokasi kost...');
+                },
+              ),
+            ),
+          ),
+
+          // Active Category Filter dengan Background
+          if (_selectedCategory.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Kategori: $_selectedCategory',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        setState(() => _selectedCategory = '');
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.clear, size: 14, color: Colors.red),
+                            SizedBox(width: 4),
+                            Text(
+                              'Hapus',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // List Kost dengan Padding
           SliverPadding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             sliver: filteredKost.isEmpty
                 ? SliverFillRemaining(
-                    hasScrollBody: false, 
+                    hasScrollBody: false,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -299,7 +353,17 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                             'Tidak ada kost tersedia',
                             style: TextStyle(
                               fontSize: 18,
-                              color: const Color.fromARGB(255, 70, 179, 242),
+                              color: Color.fromARGB(255, 70, 179, 242),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            _selectedCategory.isNotEmpty
+                                ? 'Coba ubah kategori'
+                                : 'Coba dengan kata kunci lain',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
@@ -410,7 +474,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
             ),
           ],
         ),
-      ),
+      )
     );
   }
   
@@ -715,7 +779,6 @@ class ProfileTabPage extends StatelessWidget {
   }
 
   Widget _buildUserInfo(BuildContext context, UserProfile user) {
-    // Ambil viewModel untuk mengambil gender & tanggal yang tersimpan/terpilih
     final vm = context.watch<ProfileTabViewModel>();
     final gender = vm.selectedGender ?? '-';
     final date = vm.selectedDate;
@@ -907,7 +970,7 @@ class EditProfileScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[400]!),
+                          border: Border.all(color: const Color.fromARGB(255, 32, 167, 240)!),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
