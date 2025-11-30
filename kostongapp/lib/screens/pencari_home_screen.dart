@@ -6,6 +6,8 @@ import '../widgets/responsive_searchbar.dart';
 import 'dart:async';
 import 'settings_screen.dart';
 import 'history_screen.dart';
+import 'review_screen.dart';
+import '../models/review_model.dart'; 
 
 class SeekerHomeScreen extends StatefulWidget {
   @override
@@ -200,19 +202,15 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
     final query = _searchQuery.trim().toLowerCase();
     
     final filteredKost = kostList.where((kost) {
-      // Filter berdasarkan pencarian text
       if (query.isNotEmpty) {
         final namaKost = kost['nama_kost']?.toString().toLowerCase() ?? '';
         final alamat = kost['alamat']?.toString().toLowerCase() ?? '';
         if (!namaKost.contains(query) && !alamat.contains(query)) return false;
       }
-      
-      // Filter berdasarkan kategori
       if (_selectedCategory.isNotEmpty) {
         final tipeKost = kost['tipe_kost']?.toString() ?? '';
         if (!tipeKost.contains(_selectedCategory)) return false;
       }
-      
       return true;
     }).toList();
 
@@ -220,12 +218,12 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
       onRefresh: () => _loadAll(showLoading: false),
       child: CustomScrollView(
         slivers: [
-          // --- BAGIAN INI TELAH DIUBAH (Warna Biru + Padding) ---
+          // Header Biru dengan Padding yang disesuaikan
           SliverToBoxAdapter(
             child: Container(
-              padding: EdgeInsets.fromLTRB(32, 60, 32, 40), // Padding disesuaikan
-              color: Color(0xFF4facfe), // Background Biru
-              margin: EdgeInsets.only(bottom: 0), // Margin bawah dihilangkan agar menyatu
+              padding: EdgeInsets.fromLTRB(32, 60, 32, 40),
+              color: Color(0xFF4facfe),
+              margin: EdgeInsets.only(bottom: 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -234,7 +232,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white, // Teks Putih
+                      color: Colors.white,
                     ),
                   ),
                   SizedBox(height: 8),
@@ -242,16 +240,15 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                     'Temukan kost impian Anda',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Colors.white.withOpacity(0.9), // Teks Putih Transparan
+                      color: Colors.white.withOpacity(0.9),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          // -----------------------------------------------------
-
-          // SearchBar dengan Background
+          
+          // Search Bar
           SliverToBoxAdapter(
             child: Container(
               color: Colors.white,
@@ -282,8 +279,8 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
               ),
             ),
           ),
-
-          // Active Category Filter dengan Background
+          
+          // Filter Category (Jika aktif)
           if (_selectedCategory.isNotEmpty)
             SliverToBoxAdapter(
               child: Container(
@@ -332,8 +329,8 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                 ),
               ),
             ),
-
-          // List Kost dengan Padding
+            
+          // List Kost
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             sliver: filteredKost.isEmpty
@@ -627,6 +624,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                       _buildDetailRow('Tipe Kamar', kost['tipe_kamar']),
                       _buildDetailRow('Fasilitas', kost['fasilitas']),
                       _buildDetailRow('Status', kost['status']),
+                      
                       SizedBox(height: 24),
                       Text(
                         'Deskripsi',
@@ -640,6 +638,12 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                         kost['deskripsi']?.toString() ?? 'Tidak ada deskripsi',
                         style: TextStyle(color: Colors.grey[700]),
                       ),
+                      
+                      // --- SECTION ULASAN YANG DITAMBAHKAN ---
+                      SizedBox(height: 24),
+                      _buildReviewSection(kost),
+                      // ---------------------------------------
+
                       SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
@@ -679,6 +683,118 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // WIDGET UNTUK REVIEW SECTION (Updated dengan ReviewService)
+  Widget _buildReviewSection(dynamic kost) {
+    // Ambil ID kost secara aman
+    final String kostId = kost['id']?.toString() ?? kost['_id']?.toString() ?? '0';
+    
+    // Ambil data dari Service
+    final reviews = ReviewService.getReviewsForKost(kostId);
+    final firstReview = reviews.isNotEmpty ? reviews.first : null;
+    
+    // Hitung rata-rata
+    final avgRating = reviews.isNotEmpty 
+        ? (reviews.map((e) => e.rating).reduce((a, b) => a + b) / reviews.length) 
+        : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Ulasan Penghuni',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Row(
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 20),
+                SizedBox(width: 4),
+                Text(
+                  avgRating > 0 ? avgRating.toStringAsFixed(1) : '-',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(' (${reviews.length})', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        // Preview Review Card
+        if (firstReview != null)
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(firstReview.userImage),
+                      radius: 12,
+                      backgroundColor: Colors.grey[300],
+                    ),
+                    SizedBox(width: 8),
+                    Text(firstReview.userName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Spacer(),
+                    Text(firstReview.date, style: TextStyle(color: Colors.grey, fontSize: 11)),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Text(
+                  firstReview.content,
+                  style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          )
+        else
+          Text('Belum ada ulasan untuk kost ini.', style: TextStyle(color: Colors.grey)),
+
+        SizedBox(height: 12),
+        // Tombol Lihat Semua
+        InkWell(
+          onTap: () {
+            // Navigasi ke ReviewScreen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReviewScreen(kostId: kostId),
+              ),
+            );
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Lihat Semua Ulasan',
+                style: TextStyle(
+                  color: Color(0xFF4facfe),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Color(0xFF4facfe), size: 18),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -864,7 +980,6 @@ class ProfileTabPage extends StatelessWidget {
   }
 }
 
-// Tambahkan class EditProfileScreen untuk memperbaiki referensi yang belum terdefinisi
 class EditProfileScreen extends StatelessWidget {
   final ProfileTabViewModel viewModel;
   const EditProfileScreen({Key? key, required this.viewModel}) : super(key: key);
@@ -915,7 +1030,6 @@ class EditProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Gender Picker - RadioListTile untuk pilihan yang lebih clean
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -949,7 +1063,6 @@ class EditProfileScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // Tanggal Lahir Picker
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
