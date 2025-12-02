@@ -64,14 +64,17 @@ class ApiService {
     }
   }
 
-  // REGISTER
-  static Future<Map<String, dynamic>> register(
-    String namaLengkap,
-    String email,
-    String password,
-    String telepon,
-    String role,
-  ) async {
+// REGISTER (Updated)
+  static Future<Map<String, dynamic>> register({
+    required String namaLengkap,
+    required String email,
+    required String password,
+    required String noTelepon,
+    required String role,
+    required String jenisKelamin,
+    required String tanggalLahir,
+    required Map<String, String> alamat,
+  }) async {
     final url = Uri.parse('$baseUrl/users/register');
     try {
       final res = await http
@@ -82,8 +85,11 @@ class ApiService {
               'nama_lengkap': namaLengkap,
               'email': email,
               'password': password,
-              'telepon': telepon,
+              'no_telepon': noTelepon,
               'role': role,
+              'jenis_kelamin': jenisKelamin, // Field baru
+              'tanggal_lahir': tanggalLahir, // Field baru
+              'alamat': alamat,              // Nested object alamat
             }),
           )
           .timeout(_timeout);
@@ -102,7 +108,7 @@ class ApiService {
         } catch (_) {
           return {
             'success': false,
-            'message': 'Server error ${res.statusCode}',
+            'message': 'Server error ${res.statusCode}: ${res.body}',
           };
         }
       }
