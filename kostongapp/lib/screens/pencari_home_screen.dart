@@ -7,7 +7,8 @@ import 'dart:async';
 import 'settings_screen.dart';
 import 'history_screen.dart';
 import 'review_screen.dart';
-import '../models/review_model.dart'; 
+import '../models/review_model.dart';
+import 'booking_screen.dart';
 
 class SeekerHomeScreen extends StatefulWidget {
   @override
@@ -174,7 +175,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                   _buildHomePage(),
                   _buildFavoritePage(),
                   _buildBookingPage(),
-                  ProfileTabPage(), 
+                  ProfileTabPage(),
                 ],
               ),
             ),
@@ -184,14 +185,29 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Color(0xFF4facfe),
         unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        elevation: 8,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorit'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.event_note),
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            activeIcon: Icon(Icons.favorite),
+            label: 'Favorit',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_note_outlined),
+            activeIcon: Icon(Icons.event_note),
             label: 'Booking',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profil',
+          ),
         ],
       ),
     );
@@ -200,7 +216,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   Widget _buildHomePage() {
     final kostList = dataAll['kost'] is List ? dataAll['kost'] as List : [];
     final query = _searchQuery.trim().toLowerCase();
-    
+
     final filteredKost = kostList.where((kost) {
       if (query.isNotEmpty) {
         final namaKost = kost['nama_kost']?.toString().toLowerCase() ?? '';
@@ -216,43 +232,60 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
 
     return RefreshIndicator(
       onRefresh: () => _loadAll(showLoading: false),
+      color: Color(0xFF4facfe),
       child: CustomScrollView(
         slivers: [
-          // Header Biru dengan Padding yang disesuaikan
-          SliverToBoxAdapter(
-            child: Container(
-              padding: EdgeInsets.fromLTRB(32, 60, 32, 40),
-              color: Color(0xFF4facfe),
-              margin: EdgeInsets.only(bottom: 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Halo, ${userName ?? 'Pencari Kost'}',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+          // Modern App Bar dengan Gradient
+          SliverAppBar(
+            expandedHeight: 160,
+            floating: false,
+            pinned: true,
+            backgroundColor: Color(0xFF4facfe),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(24, 20, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Halo, ${userName ?? 'Pencari Kost'} 👋',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Temukan kost impian Anda',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Temukan kost impian Anda',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-          
+
           // Search Bar
           SliverToBoxAdapter(
             child: Container(
               color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: ResponsiveSearchBar(
                 controller: _searchController,
                 onSearch: (value) {
@@ -279,101 +312,106 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
               ),
             ),
           ),
-          
+
           // Filter Category (Jika aktif)
           if (_selectedCategory.isNotEmpty)
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                margin: EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF4facfe).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Color(0xFF4facfe).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        size: 16,
+                        color: Color(0xFF4facfe),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
                         'Kategori: $_selectedCategory',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF4facfe),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        setState(() => _selectedCategory = '');
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.clear, size: 14, color: Colors.red),
-                            SizedBox(width: 4),
-                            Text(
-                              'Hapus',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.red,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                      SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          setState(() => _selectedCategory = '');
+                        },
+                        child: Icon(
+                          Icons.close,
+                          size: 16,
+                          color: Color(0xFF4facfe),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-            
+
+          // Divider
+          SliverToBoxAdapter(
+            child: Container(height: 8, color: Colors.grey[100]),
+          ),
+
           // List Kost
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            sliver: filteredKost.isEmpty
-                ? SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.home_work_outlined,
-                            size: 80,
-                            color: Colors.grey[300],
+          filteredKost.isEmpty
+              ? SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.home_work_outlined,
+                          size: 100,
+                          color: Colors.grey[300],
+                        ),
+                        SizedBox(height: 24),
+                        Text(
+                          'Tidak ada kost tersedia',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
                           ),
-                          SizedBox(height: 16),
-                          Text(
-                            'Tidak ada kost tersedia',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Color.fromARGB(255, 70, 179, 242),
-                            ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          _selectedCategory.isNotEmpty
+                              ? 'Coba ubah kategori pencarian'
+                              : 'Coba dengan kata kunci lain',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            _selectedCategory.isNotEmpty
-                                ? 'Coba ubah kategori'
-                                : 'Coba dengan kata kunci lain',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  )
-                : SliverList(
+                  ),
+                )
+              : SliverPadding(
+                  padding: EdgeInsets.all(16),
+                  sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final kost = filteredKost[index];
                       return _buildKostCard(kost);
                     }, childCount: filteredKost.length),
                   ),
-          ),
+                ),
         ],
       ),
     );
@@ -382,7 +420,8 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   Widget _buildKostCard(dynamic kost) {
     return Card(
       margin: EdgeInsets.only(bottom: 16),
-      elevation: 3,
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () => _showKostDetail(kost),
@@ -390,52 +429,116 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Stack(
-                children: [
-                  Center(
+            // Image Section with Gradient Overlay
+            Stack(
+              children: [
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                  ),
+                  child: Center(
                     child: Icon(
                       Icons.home_work,
-                      size: 60,
-                      color: Colors.white.withOpacity(0.5),
+                      size: 70,
+                      color: Colors.white.withOpacity(0.4),
                     ),
                   ),
+                ),
+                // Gradient Overlay
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+                // Favorite Button
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.favorite_border,
+                        color: Color(0xFF4facfe),
+                      ),
+                      onPressed: () {
+                        _showSnackBar('Ditambahkan ke favorit');
+                      },
+                    ),
+                  ),
+                ),
+                // Status Badge
+                if (kost['status'] != null)
                   Positioned(
                     top: 12,
-                    right: 12,
+                    left: 12,
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.favorite_border,
-                          color: Color(0xFF4facfe),
+                      decoration: BoxDecoration(
+                        color: kost['status'] == 'Tersedia'
+                            ? Colors.green
+                            : Colors.orange,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        kost['status'].toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                         ),
-                        onPressed: () {
-                          _showSnackBar('Ditambahkan ke favorit');
-                        },
                       ),
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
+            // Content Section
             Padding(
               padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Nama Kost
                   Text(
                     kost['nama_kost']?.toString() ?? 'Kost',
                     style: TextStyle(
@@ -443,8 +546,11 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                       fontWeight: FontWeight.bold,
                       color: Colors.grey[800],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 8),
+                  // Alamat
                   Row(
                     children: [
                       Icon(
@@ -466,20 +572,75 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                       ),
                     ],
                   ),
+                  SizedBox(height: 12),
+                  // Price & Details Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Price
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Harga',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Rp ${kost['harga']}/bulan',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4facfe),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // CTA Button
+                      ElevatedButton(
+                        onPressed: () => _showKostDetail(kost),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF4facfe),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Lihat Detail',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ),
-      )
+      ),
     );
   }
-  
+
   Widget _buildFavoritePage() {
-    final favList = dataAll['favorit'] is List ? dataAll['favorit'] as List : [];
+    final favList = dataAll['favorit'] is List
+        ? dataAll['favorit'] as List
+        : [];
 
     return RefreshIndicator(
       onRefresh: () => _loadAll(showLoading: false),
+      color: Color(0xFF4facfe),
       child: favList.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -488,9 +649,25 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Icon(Icons.favorite_border, size: 72, color: Colors.grey[400]),
-                      SizedBox(height: 12),
-                      Text('Belum ada favorit', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                      Icon(
+                        Icons.favorite_border,
+                        size: 100,
+                        color: Colors.grey[300],
+                      ),
+                      SizedBox(height: 24),
+                      Text(
+                        'Belum ada favorit',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Tandai kost favorit Anda',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
@@ -508,10 +685,13 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   }
 
   Widget _buildBookingPage() {
-    final bookingList = dataAll['booking'] is List ? dataAll['booking'] as List : [];
+    final bookingList = dataAll['booking'] is List
+        ? dataAll['booking'] as List
+        : [];
 
     return RefreshIndicator(
       onRefresh: () => _loadAll(showLoading: false),
+      color: Color(0xFF4facfe),
       child: bookingList.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -520,9 +700,25 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Icon(Icons.event_note_outlined, size: 72, color: Colors.grey[400]),
-                      SizedBox(height: 12),
-                      Text('Belum ada booking', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                      Icon(
+                        Icons.event_note_outlined,
+                        size: 100,
+                        color: Colors.grey[300],
+                      ),
+                      SizedBox(height: 24),
+                      Text(
+                        'Belum ada booking',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Booking kost impian Anda',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
@@ -535,11 +731,65 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
               itemBuilder: (context, index) {
                 final b = bookingList[index];
                 return Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
-                    leading: Icon(Icons.home, color: Color(0xFF4facfe)),
-                    title: Text(b['nama_kost']?.toString() ?? 'Kost'),
-                    subtitle: Text(b['tanggal']?.toString() ?? b['status']?.toString() ?? '-'),
+                    contentPadding: EdgeInsets.all(16),
+                    leading: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.home, color: Colors.white),
+                    ),
+                    title: Text(
+                      b['nama_kost']?.toString() ?? 'Kost',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 4),
+                        Text(
+                          b['tanggal']?.toString() ?? '-',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(
+                              b['status']?.toString(),
+                            ).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            b['status']?.toString() ?? 'Pending',
+                            style: TextStyle(
+                              color: _getStatusColor(b['status']?.toString()),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFF4facfe),
+                    ),
                     onTap: () => _showKostDetail(b),
                   ),
                 );
@@ -548,16 +798,31 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
     );
   }
 
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'confirmed':
+      case 'berhasil':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+      case 'gagal':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
   void _showKostDetail(dynamic kost) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (builderContext) => DraggableScrollableSheet(
+      builder: (sheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
         maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
+        builder: (_, scrollController) => Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -577,13 +842,13 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
-                  padding: EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(24, 0, 24, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Image
                       Container(
-                        height: 200,
+                        height: 220,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
@@ -593,39 +858,176 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                         child: Center(
                           child: Icon(
                             Icons.home_work,
-                            size: 80,
-                            color: Colors.white.withOpacity(0.5),
+                            size: 90,
+                            color: Colors.white.withOpacity(0.4),
                           ),
                         ),
                       ),
-                      SizedBox(height: 20),
+                      SizedBox(height: 24),
+
+                      // Title & Address
                       Text(
                         kost['nama_kost']?.toString() ?? 'Kost',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 12),
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 18, color: Colors.grey),
-                          SizedBox(width: 4),
+                          Icon(
+                            Icons.location_on,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
+                          SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               kost['alamat']?.toString() ?? '-',
-                              style: TextStyle(color: Colors.grey[600]),
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 15,
+                              ),
                             ),
                           ),
                         ],
                       ),
+
+                      SizedBox(height: 24),
+                      Divider(),
                       SizedBox(height: 20),
+
+                      // Map Section
+                      Text(
+                        "Lokasi Maps",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Container(
+                        height: 160,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue[100]!),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            _showSnackBar('Membuka Google Maps...');
+                          },
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.map_outlined,
+                                size: 48,
+                                color: Color(0xFF4facfe),
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                "Klik untuk lihat di Peta",
+                                style: TextStyle(
+                                  color: Color(0xFF4facfe),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 24),
+                      Divider(),
+                      SizedBox(height: 20),
+
+                      // Contact Owner Section
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green[100]!),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.green,
+                              radius: 24,
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Pemilik Kost",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    kost['pemilik_nama'] ?? 'Bapak/Ibu Kost',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.phone, color: Colors.green),
+                              onPressed: () {
+                                _showSnackBar(
+                                  'Menghubungi ${kost['no_telepon'] ?? 'Pemilik'}...',
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.message, color: Colors.green),
+                              onPressed: () {
+                                _showSnackBar('Membuka WhatsApp...');
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 24),
+                      Divider(),
+                      SizedBox(height: 20),
+
+                      // Details
+                      Text(
+                        'Detail Kost',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16),
                       _buildDetailRow('Harga', 'Rp ${kost['harga']}/bulan'),
                       _buildDetailRow('Tipe Kamar', kost['tipe_kamar']),
                       _buildDetailRow('Fasilitas', kost['fasilitas']),
                       _buildDetailRow('Status', kost['status']),
-                      
+
                       SizedBox(height: 24),
+                      Divider(),
+                      SizedBox(height: 20),
+
                       Text(
                         'Deskripsi',
                         style: TextStyle(
@@ -633,31 +1035,47 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 12),
                       Text(
                         kost['deskripsi']?.toString() ?? 'Tidak ada deskripsi',
-                        style: TextStyle(color: Colors.grey[700]),
+                        style: TextStyle(color: Colors.grey[700], height: 1.6),
                       ),
-                      
-                      // --- SECTION ULASAN YANG DITAMBAHKAN ---
-                      SizedBox(height: 24),
-                      _buildReviewSection(kost),
-                      // ---------------------------------------
 
                       SizedBox(height: 24),
+                      Divider(),
+                      SizedBox(height: 20),
+
+                      // Review Section
+                      _buildReviewSection(kost),
+
+                      SizedBox(height: 32),
+
+                      // Booking Button
                       SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 54,
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Get the view model from the context of the main screen
-                            final viewModel = context.read<ProfileTabViewModel>();
-                            // Add the new transaction
-                            viewModel.addNewTransaction(kost);
-                            // Close the bottom sheet
-                            Navigator.pop(context);
-                            // Show a confirmation message
-                            _showSnackBar('Booking berhasil ditambahkan ke riwayat transaksi.');
+                          onPressed: () async {
+                            // Tutup bottom sheet
+                            Navigator.pop(sheetContext);
+
+                            // Navigate ke BookingScreen menggunakan context asli
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    BookingScreen(kostData: kost),
+                              ),
+                            );
+
+                            // Show success message jika booking berhasil
+                            if (result == 'booking_success' && mounted) {
+                              _showSnackBar(
+                                'Booking berhasil! Cek halaman booking untuk detail.',
+                              );
+                              // Refresh data
+                              _loadAll(showLoading: false);
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF4facfe),
@@ -665,6 +1083,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            elevation: 4,
                           ),
                           child: Text(
                             'Booking Sekarang',
@@ -686,18 +1105,16 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
     );
   }
 
-  // WIDGET UNTUK REVIEW SECTION (Updated dengan ReviewService)
   Widget _buildReviewSection(dynamic kost) {
-    // Ambil ID kost secara aman
-    final String kostId = kost['id']?.toString() ?? kost['_id']?.toString() ?? '0';
-    
-    // Ambil data dari Service
+    final String kostId =
+        kost['id']?.toString() ?? kost['_id']?.toString() ?? '0';
+
     final reviews = ReviewService.getReviewsForKost(kostId);
     final firstReview = reviews.isNotEmpty ? reviews.first : null;
-    
-    // Hitung rata-rata
-    final avgRating = reviews.isNotEmpty 
-        ? (reviews.map((e) => e.rating).reduce((a, b) => a + b) / reviews.length) 
+
+    final avgRating = reviews.isNotEmpty
+        ? (reviews.map((e) => e.rating).reduce((a, b) => a + b) /
+              reviews.length)
         : 0.0;
 
     return Column(
@@ -708,10 +1125,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
           children: [
             Text(
               'Ulasan Penghuni',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Row(
               children: [
@@ -719,21 +1133,21 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                 SizedBox(width: 4),
                 Text(
                   avgRating > 0 ? avgRating.toStringAsFixed(1) : '-',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                Text(' (${reviews.length})', style: TextStyle(color: Colors.grey)),
+                Text(
+                  ' (${reviews.length})',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ],
             ),
           ],
         ),
         SizedBox(height: 12),
-        // Preview Review Card
+
         if (firstReview != null)
           Container(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.grey[50],
               borderRadius: BorderRadius.circular(12),
@@ -746,16 +1160,44 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                   children: [
                     CircleAvatar(
                       backgroundImage: NetworkImage(firstReview.userImage),
-                      radius: 12,
+                      radius: 16,
                       backgroundColor: Colors.grey[300],
                     ),
-                    SizedBox(width: 8),
-                    Text(firstReview.userName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Spacer(),
-                    Text(firstReview.date, style: TextStyle(color: Colors.grey, fontSize: 11)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            firstReview.userName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Icon(Icons.star, color: Colors.amber, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                firstReview.rating.toString(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      firstReview.date,
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
                   ],
                 ),
-                SizedBox(height: 6),
+                SizedBox(height: 10),
                 Text(
                   firstReview.content,
                   style: TextStyle(color: Colors.grey[700], fontSize: 13),
@@ -766,13 +1208,25 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
             ),
           )
         else
-          Text('Belum ada ulasan untuk kost ini.', style: TextStyle(color: Colors.grey)),
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Center(
+              child: Text(
+                'Belum ada ulasan untuk kost ini.',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+          ),
 
         SizedBox(height: 12),
-        // Tombol Lihat Semua
+
         InkWell(
           onTap: () {
-            // Navigasi ke ReviewScreen
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -780,18 +1234,23 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
               ),
             );
           },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Lihat Semua Ulasan',
-                style: TextStyle(
-                  color: Color(0xFF4facfe),
-                  fontWeight: FontWeight.bold,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Lihat Semua Ulasan',
+                  style: TextStyle(
+                    color: Color(0xFF4facfe),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_right, color: Color(0xFF4facfe), size: 18),
-            ],
+                SizedBox(width: 4),
+                Icon(Icons.chevron_right, color: Color(0xFF4facfe), size: 20),
+              ],
+            ),
           ),
         ),
       ],
@@ -800,23 +1259,29 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
 
   Widget _buildDetailRow(String label, dynamic value) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 110,
             child: Text(
               label,
               style: TextStyle(
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
+                fontSize: 14,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value?.toString() ?? '-',
-              style: TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.grey[800],
+              ),
             ),
           ),
         ],
@@ -825,26 +1290,25 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   }
 }
 
+// Profile Tab Page (Tetap sama, hanya styling diperbaiki)
 class ProfileTabPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<ProfileTabViewModel>();
-    final isPrivate = viewModel.isProfilePrivate;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Profil Saya'),
         backgroundColor: Colors.white,
-        elevation: 1,
+        foregroundColor: Colors.black87,
+        elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // User Info Header
-          _buildUserInfo(context, viewModel.user),
+          _buildUserInfo(context, viewModel.user, viewModel),
           const SizedBox(height: 24),
-          
-          // Navigation Tiles
+
           _buildNavigationTile(
             context,
             title: 'Edit Data Pribadi',
@@ -853,7 +1317,9 @@ class ProfileTabPage extends StatelessWidget {
               final vm = context.read<ProfileTabViewModel>();
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => EditProfileScreen(viewModel: vm)),
+                MaterialPageRoute(
+                  builder: (_) => EditProfileScreen(viewModel: vm),
+                ),
               );
             },
           ),
@@ -865,7 +1331,9 @@ class ProfileTabPage extends StatelessWidget {
               final vm = context.read<ProfileTabViewModel>();
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => SettingsScreen(viewModel: vm)),
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(viewModel: vm),
+                ),
               );
             },
           ),
@@ -874,15 +1342,15 @@ class ProfileTabPage extends StatelessWidget {
             title: 'Riwayat Transaksi',
             icon: Icons.history,
             onTap: () {
-               final vm = context.read<ProfileTabViewModel>();
-               Navigator.push(
+              final vm = context.read<ProfileTabViewModel>();
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => HistoryScreen(viewModel: vm)),
               );
             },
           ),
-          const Divider(),
-           _buildNavigationTile(
+          const Divider(height: 32),
+          _buildNavigationTile(
             context,
             title: 'Logout',
             icon: Icons.logout,
@@ -894,66 +1362,81 @@ class ProfileTabPage extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfo(BuildContext context, UserProfile user) {
-    final vm = context.watch<ProfileTabViewModel>();
+  Widget _buildUserInfo(
+    BuildContext context,
+    UserProfile user,
+    ProfileTabViewModel vm,
+  ) {
     final gender = vm.selectedGender ?? '-';
     final date = vm.selectedDate;
     String formattedDate = '-';
     if (date != null) {
       final d = date is DateTime ? date : null;
-       if (d != null) formattedDate = '${d.day}/${d.month}/${d.year}';
-     }
+      if (d != null) formattedDate = '${d.day}/${d.month}/${d.year}';
+    }
 
-     return Center(
-       child: Column(
-         children: [
-           CircleAvatar(
-             radius: 50,
-             backgroundImage: NetworkImage(user.profileImageUrl),
-           ),
-           const SizedBox(height: 16),
-           Text(
-             user.fullName,
-             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-           ),
-           const SizedBox(height: 6),
-           Text(
-             user.email,
-             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-           ),
-           const SizedBox(height: 8),
-           // Gender & Tanggal Lahir
-           Row(
-             mainAxisSize: MainAxisSize.min,
-             children: [
-               Icon(Icons.person, size: 16, color: Colors.grey[600]),
-               const SizedBox(width: 6),
-               Text(gender, style: TextStyle(color: Colors.grey[700])),
-               const SizedBox(width: 12),
-               Icon(Icons.cake, size: 16, color: Colors.grey[600]),
-               const SizedBox(width: 6),
-               Text(formattedDate, style: TextStyle(color: Colors.grey[700])),
-             ],
-           ),
-         ],
-       ),
-     );
-   }
-  
-  Widget _buildNavigationTile(BuildContext context, {required String title, required IconData icon, required VoidCallback onTap, bool isDestructive = false}) {
+    return Center(
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: NetworkImage(user.profileImageUrl),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            user.fullName,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            user.email,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.person, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 6),
+              Text(gender, style: TextStyle(color: Colors.grey[700])),
+              const SizedBox(width: 12),
+              Icon(Icons.cake, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 6),
+              Text(formattedDate, style: TextStyle(color: Colors.grey[700])),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavigationTile(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
     final color = isDestructive ? Colors.red : Colors.grey[700];
     return Card(
       elevation: 0.5,
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         leading: Icon(icon, color: color),
-        title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+        title: Text(
+          title,
+          style: TextStyle(color: color, fontWeight: FontWeight.w500),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
     );
   }
-  
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -968,9 +1451,14 @@ class ProfileTabPage extends StatelessWidget {
             ),
             ElevatedButton(
               child: const Text('Ya, Logout'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
               },
             ),
           ],
@@ -982,7 +1470,8 @@ class ProfileTabPage extends StatelessWidget {
 
 class EditProfileScreen extends StatelessWidget {
   final ProfileTabViewModel viewModel;
-  const EditProfileScreen({Key? key, required this.viewModel}) : super(key: key);
+  const EditProfileScreen({Key? key, required this.viewModel})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -991,7 +1480,8 @@ class EditProfileScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Edit Data Pribadi'),
-          backgroundColor: const Color.fromARGB(255, 96, 96, 96),
+          backgroundColor: Color(0xFF4facfe),
+          foregroundColor: Colors.white,
         ),
         body: Consumer<ProfileTabViewModel>(
           builder: (context, vm, _) => Padding(
@@ -1033,7 +1523,10 @@ class EditProfileScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Jenis Kelamin', style: Theme.of(context).textTheme.bodyLarge),
+                    Text(
+                      'Jenis Kelamin',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
                     Row(
                       children: [
                         Expanded(
@@ -1054,7 +1547,7 @@ class EditProfileScreen extends StatelessWidget {
                             groupValue: vm.selectedGender,
                             onChanged: (val) => vm.setGender(val),
                             contentPadding: EdgeInsets.zero,
-                            activeColor: const Color.fromARGB(255, 239, 79, 254),
+                            activeColor: const Color(0xFF4facfe),
                             dense: true,
                           ),
                         ),
@@ -1066,7 +1559,10 @@ class EditProfileScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tanggal Lahir', style: Theme.of(context).textTheme.bodyLarge),
+                    Text(
+                      'Tanggal Lahir',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
                     const SizedBox(height: 8),
                     InkWell(
                       onTap: () async {
@@ -1081,9 +1577,12 @@ class EditProfileScreen extends StatelessWidget {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
-                          border: Border.all(color: const Color.fromARGB(255, 32, 167, 240)!),
+                          border: Border.all(color: Colors.grey[400]!),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(

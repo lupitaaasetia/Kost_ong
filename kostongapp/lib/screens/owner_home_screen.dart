@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'dart:async';
+// Pastikan mengimport screen terkait
+import 'add_edit_kost_screen.dart';
+import 'statistic_screen.dart';
 
 class OwnerHomeScreen extends StatefulWidget {
   @override
@@ -17,6 +20,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   Timer? _autoRefreshTimer;
   bool _isInit = true;
   int _selectedIndex = 0;
+  int notificationCount = 5; // Badge count dummy
 
   @override
   void initState() {
@@ -143,10 +147,28 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   void _logout() {
-    setState(() {
-      token = null;
-    });
-    Navigator.pushReplacementNamed(context, '/');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Konfirmasi Logout'),
+        content: Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => token = null);
+              Navigator.pushReplacementNamed(context, '/');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Logout'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -159,16 +181,44 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(Icons.notifications_outlined),
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/notifications',
+                    arguments: {'token': token},
+                  );
+                },
+              ),
+              if (notificationCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: BoxConstraints(minWidth: 18, minHeight: 18),
+                    child: Center(
+                      child: Text(
+                        notificationCount > 9 ? '9+' : '$notificationCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout,
-          ),
+          IconButton(icon: Icon(Icons.logout), onPressed: _logout),
         ],
         backgroundColor: Colors.white,
         foregroundColor: Color(0xFF667eea),
@@ -189,7 +239,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
               index: _selectedIndex,
               children: [
                 _buildDashboardPage(),
-                _buildKostPage(),
+                _buildKostPage(), // Halaman ini sudah diperbarui
                 _buildBookingPage(),
                 _buildProfilePage(),
               ],
@@ -356,7 +406,18 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
                       Icons.add_home,
                       Color(0xFF667eea),
                       () {
-                        // TODO: Navigate to add kost
+                        // PERBAIKAN: Menggunakan MaterialPageRoute untuk passing token
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddEditKostScreen(),
+                            settings: RouteSettings(
+                              arguments: {'token': token},
+                            ),
+                          ),
+                        ).then((result) {
+                          if (result == true) _loadAll(showLoading: false);
+                        });
                       },
                     ),
                   ),
@@ -373,12 +434,423 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
                   ),
                 ],
               ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      'Laporan',
+                      Icons.bar_chart,
+                      Color(0xFF48dbfb),
+                      () {
+                        // PERBAIKAN: Menggunakan MaterialPageRoute untuk passing token
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StatisticsScreen(),
+                            settings: RouteSettings(
+                              arguments: {'token': token},
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionButton(
+                      'Pengaturan',
+                      Icons.settings,
+                      Color(0xFFf093fb),
+                      () {
+                        Navigator.pushNamed(
+                          context,
+                          '/settings',
+                          arguments: {'token': token},
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  // --- BAGIAN TAMPILAN KOST MODERN ---
+  Widget _buildKostPage() {
+    final kostList = dataAll['kost'] is List ? dataAll['kost'] as List : [];
+
+    return RefreshIndicator(
+      onRefresh: () => _loadAll(showLoading: false),
+      child: kostList.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF667eea).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.home_work_outlined,
+                      size: 60,
+                      color: Color(0xFF667eea),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Belum ada kost',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Mulai sewakan properti Anda sekarang',
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                  SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddEditKostScreen(),
+                          settings: RouteSettings(arguments: {'token': token}),
+                        ),
+                      ).then((result) {
+                        if (result == true) _loadAll(showLoading: false);
+                      });
+                    },
+                    icon: Icon(Icons.add),
+                    label: Text('Tambah Kost'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF667eea),
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      shadowColor: Color(0xFF667eea).withOpacity(0.4),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 80),
+              itemCount: kostList.length,
+              itemBuilder: (context, index) {
+                final kost = kostList[index];
+                return _buildModernKostCard(kost);
+              },
+            ),
+    );
+  }
+
+  Widget _buildModernKostCard(dynamic kost) {
+    final status = kost['status']?.toString() ?? 'Tersedia';
+    final isAvailable = status.toLowerCase() == 'tersedia';
+
+    // Format Harga Manual
+    final hargaString = kost['harga']?.toString() ?? '0';
+    final hargaFormatted =
+        "Rp " +
+        hargaString.replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. HEADER IMAGE & STATUS BADGE
+          Stack(
+            children: [
+              // Placeholder Gambar Modern
+              Container(
+                height: 140,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.apartment,
+                    size: 60,
+                    color: Colors.white.withOpacity(0.3),
+                  ),
+                ),
+              ),
+              // Badge Status
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isAvailable ? Colors.green : Colors.orange,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isAvailable ? Icons.check_circle : Icons.info,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        status,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Badge Tipe (Putra/Putri/Campur)
+              Positioned(
+                bottom: 12,
+                left: 12,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    kost['tipe']?.toString().toUpperCase() ?? 'UMUM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // 2. CONTENT INFO
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            kost['nama_kost']?.toString() ?? 'Nama Kost',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  kost['alamat']?.toString() ??
+                                      'Alamat belum diisi',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+
+                // Fasilitas Ringkas & Harga
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.meeting_room_outlined,
+                          size: 16,
+                          color: Color(0xFF667eea),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          '${kost['jumlah_kamar'] ?? 0} Kamar',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      hargaFormatted,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF667eea),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // 3. ACTION BUTTONS (Edit & Delete)
+          Container(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: Colors.grey[100]!)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _showDeleteKostDialog(kost),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(16),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.delete_outline,
+                            color: Colors.red[400],
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Hapus',
+                            style: TextStyle(
+                              color: Colors.red[400],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Container(width: 1, height: 48, color: Colors.grey[100]),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      // PERBAIKAN FITUR EDIT: Mengirim 'kost' sebagai argument
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddEditKostScreen(),
+                          settings: RouteSettings(
+                            arguments: {'token': token, 'kost': kost},
+                          ),
+                        ),
+                      ).then((result) {
+                        if (result == true) _loadAll(showLoading: false);
+                      });
+                    },
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(16),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            color: Color(0xFF667eea),
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: Color(0xFF667eea),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  // ------------------------------------
 
   Widget _buildStatCard(
     String title,
@@ -467,167 +939,31 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     );
   }
 
-  Widget _buildKostPage() {
-    final kostList = dataAll['kost'] is List ? dataAll['kost'] as List : [];
-
-    return RefreshIndicator(
-      onRefresh: () => _loadAll(showLoading: false),
-      child: kostList.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.home_work_outlined,
-                    size: 80,
-                    color: Colors.grey[300],
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Belum ada kost',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Tambahkan kost pertama Anda',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                  SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Add kost
-                    },
-                    icon: Icon(Icons.add),
-                    label: Text('Tambah Kost'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF667eea),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: kostList.length,
-              itemBuilder: (context, index) {
-                final kost = kostList[index];
-                return _buildKostCard(kost);
-              },
-            ),
-    );
-  }
-
-  Widget _buildKostCard(dynamic kost) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.home_work, color: Colors.white, size: 30),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        kost['nama_kost']?.toString() ?? 'Kost',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        kost['alamat']?.toString() ?? '-',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton(
-                  icon: Icon(Icons.more_vert),
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, size: 18),
-                          SizedBox(width: 8),
-                          Text('Edit'),
-                        ],
-                      ),
-                      value: 'edit',
-                    ),
-                    PopupMenuItem(
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, size: 18, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Hapus', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                      value: 'delete',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            Divider(),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                _buildInfoChip('Harga', kost['harga']?.toString() ?? '-'),
-                SizedBox(width: 8),
-                _buildInfoChip('Status', kost['status']?.toString() ?? '-'),
-              ],
-            ),
-          ],
+  void _showDeleteKostDialog(dynamic kost) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Hapus Kost'),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus "${kost['nama_kost']}"?',
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(String label, String value) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Color(0xFF667eea).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        '$label: $value',
-        style: TextStyle(
-          fontSize: 12,
-          color: Color(0xFF667eea),
-          fontWeight: FontWeight.w500,
-        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // TODO: Panggil API delete kost di sini
+              // await ApiService.deleteKost(token, kost['id']);
+              _showSnackBar('Kost berhasil dihapus');
+              _loadAll(showLoading: false);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Hapus'),
+          ),
+        ],
       ),
     );
   }
@@ -669,21 +1005,63 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   Widget _buildBookingCard(dynamic booking) {
+    final status = booking['status']?.toString() ?? 'Pending';
+    Color statusColor;
+
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+      case 'dikonfirmasi':
+        statusColor = Colors.green;
+        break;
+      case 'rejected':
+      case 'ditolak':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.orange;
+    }
+
     return Card(
       margin: EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Color(0xFF667eea),
-          child: Icon(Icons.person, color: Colors.white),
-        ),
-        title: Text(booking['nama_pemesan']?.toString() ?? 'Booking'),
-        subtitle: Text(booking['tanggal_booking']?.toString() ?? '-'),
-        trailing: Chip(
-          label: Text(
-            booking['status']?.toString() ?? 'Pending',
-            style: TextStyle(fontSize: 11),
+      child: InkWell(
+        onTap: () {
+          // Navigasi ke detail booking juga sebaiknya menggunakan MaterialPageRoute jika perlu argument
+          Navigator.pushNamed(
+            context,
+            '/booking_detail',
+            arguments: {'token': token, 'booking': booking},
+          ).then((result) {
+            if (result == true) _loadAll(showLoading: false);
+          });
+        },
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: Color(0xFF667eea),
+            child: Icon(Icons.person, color: Colors.white),
           ),
-          backgroundColor: Color(0xFF667eea).withOpacity(0.1),
+          title: Text(
+            booking['nama_pemesan']?.toString() ?? 'Booking',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 4),
+              Text(booking['tanggal_booking']?.toString() ?? '-'),
+              SizedBox(height: 2),
+              Text(
+                booking['nama_kost']?.toString() ?? '-',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+          trailing: Chip(
+            label: Text(
+              status,
+              style: TextStyle(fontSize: 11, color: Colors.white),
+            ),
+            backgroundColor: statusColor,
+          ),
         ),
       ),
     );
@@ -708,13 +1086,34 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
           SizedBox(height: 8),
           Text('Pemilik Kost', style: TextStyle(color: Colors.grey[600])),
           SizedBox(height: 32),
-          _buildProfileMenuItem(Icons.person, 'Edit Profil', () {}),
-          _buildProfileMenuItem(Icons.settings, 'Pengaturan', () {}),
+          _buildProfileMenuItem(Icons.person, 'Edit Profil', () {
+            Navigator.pushNamed(
+              context,
+              '/edit_profile',
+              arguments: {'token': token},
+            );
+          }),
+          _buildProfileMenuItem(Icons.bar_chart, 'Laporan & Statistik', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StatisticsScreen(),
+                settings: RouteSettings(arguments: {'token': token}),
+              ),
+            );
+          }),
+          _buildProfileMenuItem(Icons.settings, 'Pengaturan', () {
+            Navigator.pushNamed(
+              context,
+              '/settings',
+              arguments: {'token': token},
+            );
+          }),
           _buildProfileMenuItem(Icons.help, 'Bantuan', () {}),
           _buildProfileMenuItem(
             Icons.logout,
             'Keluar',
-            () => Navigator.pushReplacementNamed(context, '/'),
+            _logout,
             isDestructive: true,
           ),
         ],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/review_model.dart'; 
+import '../models/review_model.dart';
 
 class ReviewScreen extends StatefulWidget {
   final String kostId;
@@ -88,7 +88,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           child: Center(
                             child: Column(
                               children: [
-                                Icon(Icons.comment_outlined, size: 48, color: Colors.grey[300]),
+                                Icon(
+                                  Icons.comment_outlined,
+                                  size: 48,
+                                  color: Colors.grey[300],
+                                ),
                                 const SizedBox(height: 16),
                                 Text(
                                   "Belum ada ulasan.",
@@ -171,9 +175,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Text(star,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(
+            star,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
           const SizedBox(width: 4),
           const Icon(Icons.star, size: 12, color: Colors.amber),
           const SizedBox(width: 8),
@@ -183,8 +188,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: LinearProgressIndicator(
                 value: percent,
                 backgroundColor: Colors.grey[200],
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Color(0xFF4facfe)),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFF4facfe),
+                ),
                 minHeight: 6,
               ),
             ),
@@ -232,8 +238,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -245,7 +253,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       Text(
                         review.rating.toString(),
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.amber),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
                       ),
                     ],
                   ),
@@ -253,14 +263,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Konten Review
             Text(
               review.content,
               style: TextStyle(color: Colors.grey[800], height: 1.5),
             ),
             const SizedBox(height: 16),
-            
+
             // Tombol Aksi (Like & Reply)
             Row(
               children: [
@@ -269,7 +279,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 4, horizontal: 8),
+                      vertical: 4,
+                      horizontal: 8,
+                    ),
                     child: Row(
                       children: [
                         Icon(
@@ -299,16 +311,23 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 4, horizontal: 8),
+                      vertical: 4,
+                      horizontal: 8,
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.chat_bubble_outline,
-                            size: 19, color: Colors.grey[600]),
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 19,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Balas',
-                          style:
-                              TextStyle(color: Colors.grey[600], fontSize: 13),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -329,73 +348,77 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 ),
                 child: Column(
                   children: review.replies
-                      .map((reply) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  backgroundImage:
-                                      NetworkImage(reply.userImage),
-                                  radius: 12,
-                                  backgroundColor: Colors.grey[300],
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            reply.userName,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12),
+                      .map(
+                        (reply) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: NetworkImage(reply.userImage),
+                                radius: 12,
+                                backgroundColor: Colors.grey[300],
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          reply.userName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
                                           ),
-                                          if (reply.isOwner) ...[
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 4,
-                                                      vertical: 1),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF4facfe),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: const Text(
-                                                'Pemilik',
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 8),
+                                        ),
+                                        if (reply.isOwner) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                              vertical: 1,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF4facfe),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: const Text(
+                                              'Pemilik',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
                                               ),
                                             ),
-                                          ],
-                                          const Spacer(),
-                                          Text(
-                                            reply.date,
-                                            style: TextStyle(
-                                                color: Colors.grey[400],
-                                                fontSize: 10),
                                           ),
                                         ],
+                                        const Spacer(),
+                                        Text(
+                                          reply.date,
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      reply.content,
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 12,
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        reply.content,
-                                        style: TextStyle(
-                                            color: Colors.grey[700],
-                                            fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ))
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -470,8 +493,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20,
-                  MediaQuery.of(context).viewInsets.bottom + 20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,9 +519,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                             });
                           },
                           icon: Icon(
-                            index < _rating
-                                ? Icons.star
-                                : Icons.star_border,
+                            index < _rating ? Icons.star : Icons.star_border,
                             color: Colors.amber,
                             size: 32,
                           ),
@@ -503,7 +528,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     ),
                   ),
                   const Center(
-                      child: Text('Ketuk bintang untuk memberi rating')),
+                    child: Text('Ketuk bintang untuk memberi rating'),
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _reviewController,
@@ -523,17 +549,17 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        if (_rating > 0 &&
-                            _reviewController.text.isNotEmpty) {
+                        if (_rating > 0 && _reviewController.text.isNotEmpty) {
                           // Di sini bisa ditambahkan logika simpan ke API
                           // Untuk sekarang, kita hanya tampilkan pesan sukses
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('Ulasan berhasil dikirim!')),
+                              content: Text('Ulasan berhasil dikirim!'),
+                            ),
                           );
                           // Optional: Refresh list review
-                          // _loadReviews(); 
+                          // _loadReviews();
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -542,10 +568,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Kirim Ulasan',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Kirim Ulasan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],

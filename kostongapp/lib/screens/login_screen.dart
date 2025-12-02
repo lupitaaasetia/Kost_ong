@@ -75,11 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.home_work,
-                            size: 120,
-                            color: Colors.white,
-                          ),
+                          Icon(Icons.home_work, size: 120, color: Colors.white),
                           SizedBox(height: 20),
                           Text(
                             'Selamat Datang di Kostong',
@@ -168,11 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.home_work,
-              size: 48,
-              color: Colors.white,
-            ),
+            child: Icon(Icons.home_work, size: 48, color: Colors.white),
           ),
           SizedBox(height: 16),
           Text(
@@ -188,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           'Login ke akun Anda',
           style: TextStyle(
-            fontSize: isMobile ? 14 : 24, 
+            fontSize: isMobile ? 14 : 24,
             fontWeight: isMobile ? FontWeight.normal : FontWeight.bold,
             color: isMobile ? Colors.grey[700] : Colors.black87,
           ),
@@ -203,10 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: emailC,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Color(0xFF667eea),
-                  ),
+                  prefixIcon: Icon(Icons.email, color: Color(0xFF667eea)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
@@ -217,10 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Color(0xFF667eea),
-                      width: 2,
-                    ),
+                    borderSide: BorderSide(color: Color(0xFF667eea), width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
@@ -238,10 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: Icon(
-                    Icons.lock,
-                    color: Color(0xFF667eea),
-                  ),
+                  prefixIcon: Icon(Icons.lock, color: Color(0xFF667eea)),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -265,10 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Color(0xFF667eea),
-                      width: 2,
-                    ),
+                    borderSide: BorderSide(color: Color(0xFF667eea), width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],

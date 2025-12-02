@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -9,7 +9,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers Data Diri
   final TextEditingController namaC = TextEditingController();
   final TextEditingController emailC = TextEditingController();
@@ -28,7 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String error = '';
   bool loading = false;
-  String selectedRole = 'pencari'; 
+  String selectedRole = 'pencari';
   String? selectedGender; // Untuk dropdown jenis kelamin
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -76,7 +76,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       noTelepon: teleponC.text.trim(),
       role: selectedRole,
       jenisKelamin: selectedGender!,
-      tanggalLahir: selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      tanggalLahir:
+          selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
       alamat: {
         'jalan': jalanC.text.trim(),
         'kelurahan': kelurahanC.text.trim(),
@@ -165,8 +166,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         child: Row(
                           children: [
-                            Expanded(child: _buildRoleButton('pencari', 'Pencari', Icons.person_search)),
-                            Expanded(child: _buildRoleButton('pemilik', 'Pemilik', Icons.business)),
+                            Expanded(
+                              child: _buildRoleButton(
+                                'pencari',
+                                'Pencari',
+                                Icons.person_search,
+                              ),
+                            ),
+                            Expanded(
+                              child: _buildRoleButton(
+                                'pemilik',
+                                'Pemilik',
+                                Icons.business,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -179,32 +192,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _sectionTitle("Data Diri"),
-                            _buildTextField(controller: namaC, label: 'Nama Lengkap', icon: Icons.person),
-                            SizedBox(height: 12),
                             _buildTextField(
-                              controller: emailC, 
-                              label: 'Email', 
-                              icon: Icons.email, 
-                              keyboardType: TextInputType.emailAddress
+                              controller: namaC,
+                              label: 'Nama Lengkap',
+                              icon: Icons.person,
                             ),
                             SizedBox(height: 12),
                             _buildTextField(
-                              controller: teleponC, 
-                              label: 'No. Telepon', 
-                              icon: Icons.phone, 
-                              keyboardType: TextInputType.phone
+                              controller: emailC,
+                              label: 'Email',
+                              icon: Icons.email,
+                              keyboardType: TextInputType.emailAddress,
                             ),
                             SizedBox(height: 12),
-                            
+                            _buildTextField(
+                              controller: teleponC,
+                              label: 'No. Telepon',
+                              icon: Icons.phone,
+                              keyboardType: TextInputType.phone,
+                            ),
+                            SizedBox(height: 12),
+
                             // Dropdown Gender
                             DropdownButtonFormField<String>(
                               value: selectedGender,
-                              decoration: _inputDecoration('Jenis Kelamin', Icons.wc),
-                              items: ['Laki-laki', 'Perempuan'].map((String val) {
-                                return DropdownMenuItem(value: val, child: Text(val));
+                              decoration: _inputDecoration(
+                                'Jenis Kelamin',
+                                Icons.wc,
+                              ),
+                              items: ['Laki-laki', 'Perempuan'].map((
+                                String val,
+                              ) {
+                                return DropdownMenuItem(
+                                  value: val,
+                                  child: Text(val),
+                                );
                               }).toList(),
-                              onChanged: (v) => setState(() => selectedGender = v),
-                              validator: (v) => v == null ? 'Pilih jenis kelamin' : null,
+                              onChanged: (v) =>
+                                  setState(() => selectedGender = v),
+                              validator: (v) =>
+                                  v == null ? 'Pilih jenis kelamin' : null,
                             ),
                             SizedBox(height: 12),
 
@@ -213,33 +240,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               controller: tglLahirC,
                               readOnly: true,
                               onTap: () => _selectDate(context),
-                              decoration: _inputDecoration('Tanggal Lahir', Icons.calendar_today),
-                              validator: (v) => v!.isEmpty ? 'Isi tanggal lahir' : null,
+                              decoration: _inputDecoration(
+                                'Tanggal Lahir',
+                                Icons.calendar_today,
+                              ),
+                              validator: (v) =>
+                                  v!.isEmpty ? 'Isi tanggal lahir' : null,
                             ),
-                            
+
                             SizedBox(height: 24),
                             _sectionTitle("Alamat Lengkap"),
-                            
+
                             // Form Alamat
-                            _buildTextField(controller: jalanC, label: 'Jalan (mis: Jl. Mawar No.1)', icon: Icons.add_road),
+                            _buildTextField(
+                              controller: jalanC,
+                              label: 'Jalan (mis: Jl. Mawar No.1)',
+                              icon: Icons.add_road,
+                            ),
                             SizedBox(height: 12),
                             Row(
                               children: [
-                                Expanded(child: _buildTextField(controller: kelurahanC, label: 'Kelurahan', icon: Icons.map)),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: kelurahanC,
+                                    label: 'Kelurahan',
+                                    icon: Icons.map,
+                                  ),
+                                ),
                                 SizedBox(width: 12),
-                                Expanded(child: _buildTextField(controller: kecamatanC, label: 'Kecamatan', icon: Icons.map_outlined)),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: kecamatanC,
+                                    label: 'Kecamatan',
+                                    icon: Icons.map_outlined,
+                                  ),
+                                ),
                               ],
                             ),
                             SizedBox(height: 12),
                             Row(
                               children: [
-                                Expanded(child: _buildTextField(controller: kotaC, label: 'Kota/Kab', icon: Icons.location_city)),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: kotaC,
+                                    label: 'Kota/Kab',
+                                    icon: Icons.location_city,
+                                  ),
+                                ),
                                 SizedBox(width: 12),
-                                Expanded(child: _buildTextField(controller: provinsiC, label: 'Provinsi', icon: Icons.public)),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: provinsiC,
+                                    label: 'Provinsi',
+                                    icon: Icons.public,
+                                  ),
+                                ),
                               ],
                             ),
                             SizedBox(height: 12),
-                            _buildTextField(controller: kodePosC, label: 'Kode Pos', icon: Icons.numbers, keyboardType: TextInputType.number),
+                            _buildTextField(
+                              controller: kodePosC,
+                              label: 'Kode Pos',
+                              icon: Icons.numbers,
+                              keyboardType: TextInputType.number,
+                            ),
 
                             SizedBox(height: 24),
                             _sectionTitle("Keamanan"),
@@ -249,8 +313,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               icon: Icons.lock,
                               obscureText: _obscurePassword,
                               suffixIcon: IconButton(
-                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                               ),
                             ),
                             SizedBox(height: 12),
@@ -260,10 +330,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               icon: Icons.lock_outline,
                               obscureText: _obscureConfirmPassword,
                               suffixIcon: IconButton(
-                                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscureConfirmPassword =
+                                      !_obscureConfirmPassword,
+                                ),
                               ),
-                              validator: (v) => v != passC.text ? 'Password tidak sama' : null,
+                              validator: (v) => v != passC.text
+                                  ? 'Password tidak sama'
+                                  : null,
                             ),
 
                             SizedBox(height: 32),
@@ -278,27 +357,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFF667eea),
                                         foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
-                                      child: Text('Daftar Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      child: Text(
+                                        'Daftar Sekarang',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                            
+
                             // Error
                             if (error.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
-                                child: Text(error, style: TextStyle(color: Colors.red, fontSize: 14), textAlign: TextAlign.center),
+                                child: Text(
+                                  error,
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
 
                             SizedBox(height: 24),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('Sudah punya akun? ', style: TextStyle(color: Colors.grey[700])),
+                                Text(
+                                  'Sudah punya akun? ',
+                                  style: TextStyle(color: Colors.grey[700]),
+                                ),
                                 GestureDetector(
-                                  onTap: () => Navigator.pushReplacementNamed(context, '/'),
-                                  child: Text('Login', style: TextStyle(color: Color(0xFF667eea), fontWeight: FontWeight.bold)),
+                                  onTap: () => Navigator.pushReplacementNamed(
+                                    context,
+                                    '/',
+                                  ),
+                                  child: Text(
+                                    'Login',
+                                    style: TextStyle(
+                                      color: Color(0xFF667eea),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -319,7 +427,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _sectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[800],
+        ),
+      ),
     );
   }
 
@@ -337,21 +452,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Icon(icon, color: isSelected ? Colors.white : Colors.grey[600]),
             SizedBox(height: 4),
-            Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey[700], fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[700],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon, {
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: Color(0xFF667eea)),
       suffixIcon: suffixIcon,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Color(0xFF667eea), width: 2)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0xFF667eea), width: 2),
+      ),
       filled: true,
       fillColor: Colors.grey[50],
       isDense: true,
@@ -371,7 +505,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      validator: validator ?? (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
+      validator:
+          validator ?? (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
       decoration: _inputDecoration(label, icon, suffixIcon: suffixIcon),
     );
   }

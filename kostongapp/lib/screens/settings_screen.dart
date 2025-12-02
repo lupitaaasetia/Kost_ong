@@ -48,7 +48,9 @@ class SettingsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey[600]),
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(color: Colors.grey[600]),
       ),
     );
   }
@@ -100,14 +102,20 @@ class SettingsScreen extends StatelessWidget {
             title: Text('Update Aplikasi'),
             value: false,
             onChanged: (val) {},
-            secondary: Icon(Icons.system_update_outlined, color: Color(0xFF667eea)),
+            secondary: Icon(
+              Icons.system_update_outlined,
+              color: Color(0xFF667eea),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPrivacySection(BuildContext context, ProfileTabViewModel viewModel) {
+  Widget _buildPrivacySection(
+    BuildContext context,
+    ProfileTabViewModel viewModel,
+  ) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -119,7 +127,10 @@ class SettingsScreen extends StatelessWidget {
         subtitle: const Text('Sembunyikan informasi data diri'),
         value: viewModel.isProfilePrivate,
         onChanged: (value) => viewModel.setPrivacy(value),
-        secondary: const Icon(Icons.security_outlined, color: Color(0xFF667eea)),
+        secondary: const Icon(
+          Icons.security_outlined,
+          color: Color(0xFF667eea),
+        ),
       ),
     );
   }
@@ -135,7 +146,10 @@ class SettingsScreen extends StatelessWidget {
       child: ListTile(
         leading: Icon(Icons.delete_forever_outlined, color: Colors.red),
         title: Text('Hapus Akun', style: TextStyle(color: Colors.red)),
-        subtitle: Text('Hapus akun Anda secara permanen', style: TextStyle(color: Colors.redAccent)),
+        subtitle: Text(
+          'Hapus akun Anda secara permanen',
+          style: TextStyle(color: Colors.redAccent),
+        ),
         onTap: () => _showDeleteConfirmDialog(context),
       ),
     );
@@ -163,7 +177,8 @@ class SettingsScreen extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (val) => (val?.isEmpty ?? true) || !val!.contains('@')
+                  validator: (val) =>
+                      (val?.isEmpty ?? true) || !val!.contains('@')
                       ? 'Email tidak valid'
                       : null,
                 ),
@@ -175,7 +190,9 @@ class SettingsScreen extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                   obscureText: true,
-                  validator: (val) => (val?.isEmpty ?? true) ? 'Password tidak boleh kosong' : null,
+                  validator: (val) => (val?.isEmpty ?? true)
+                      ? 'Password tidak boleh kosong'
+                      : null,
                 ),
               ],
             ),
@@ -201,7 +218,11 @@ class SettingsScreen extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(success ? 'Email berhasil diubah!' : 'Gagal mengubah email.'),
+                      content: Text(
+                        success
+                            ? 'Email berhasil diubah!'
+                            : 'Gagal mengubah email.',
+                      ),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );
@@ -241,7 +262,9 @@ class SettingsScreen extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                   obscureText: true,
-                  validator: (val) => (val?.isEmpty ?? true) ? 'Password tidak boleh kosong' : null,
+                  validator: (val) => (val?.isEmpty ?? true)
+                      ? 'Password tidak boleh kosong'
+                      : null,
                 ),
                 SizedBox(height: 12),
                 TextFormField(
@@ -252,7 +275,8 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   obscureText: true,
                   validator: (val) {
-                    if (val?.isEmpty ?? true) return 'Password baru tidak boleh kosong';
+                    if (val?.isEmpty ?? true)
+                      return 'Password baru tidak boleh kosong';
                     if (val!.length < 6) return 'Minimal 6 karakter';
                     return null;
                   },
@@ -265,8 +289,9 @@ class SettingsScreen extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                   obscureText: true,
-                  validator: (val) =>
-                      val != newPasswordController.text ? 'Password tidak cocok' : null,
+                  validator: (val) => val != newPasswordController.text
+                      ? 'Password tidak cocok'
+                      : null,
                 ),
               ],
             ),
@@ -294,7 +319,11 @@ class SettingsScreen extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(success ? 'Password berhasil diubah!' : 'Gagal mengubah password.'),
+                      content: Text(
+                        success
+                            ? 'Password berhasil diubah!'
+                            : 'Gagal mengubah password.',
+                      ),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );

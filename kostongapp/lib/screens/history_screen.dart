@@ -11,17 +11,22 @@ class HistoryScreen extends StatelessWidget {
     final transactions = viewModel.transactions;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Riwayat Transaksi'),
-      ),
+      appBar: AppBar(title: Text('Riwayat Transaksi')),
       body: transactions.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[300]),
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 80,
+                    color: Colors.grey[300],
+                  ),
                   const SizedBox(height: 16),
-                  Text('Belum ada transaksi', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
+                  Text(
+                    'Belum ada transaksi',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  ),
                 ],
               ),
             )
@@ -35,20 +40,28 @@ class HistoryScreen extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey[200]!)
+                    side: BorderSide(color: Colors.grey[200]!),
                   ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    leading: CircleAvatar(
-                      child: Icon(Icons.receipt_long),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 16.0,
                     ),
-                    title: Text(trx.service, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('${trx.date.day}/${trx.date.month}/${trx.date.year} - ID: ${trx.id}'),
+                    leading: CircleAvatar(child: Icon(Icons.receipt_long)),
+                    title: Text(
+                      trx.service,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${trx.date.day}/${trx.date.month}/${trx.date.year} - ID: ${trx.id}',
+                    ),
                     trailing: _buildStatusBadge(trx.status),
                     onTap: () {
                       // Optional: Show transaction detail dialog
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Detail untuk transaksi ${trx.id}')),
+                        SnackBar(
+                          content: Text('Detail untuk transaksi ${trx.id}'),
+                        ),
                       );
                     },
                   ),
@@ -62,15 +75,26 @@ class HistoryScreen extends StatelessWidget {
     Color color;
     String text = status;
     switch (status) {
-      case 'Berhasil': color = Colors.green; break;
-      case 'Pending': color = Colors.orange; break;
-      case 'Gagal': color = Colors.red; break;
-      default: color = Colors.grey;
+      case 'Berhasil':
+        color = Colors.green;
+        break;
+      case 'Pending':
+        color = Colors.orange;
+        break;
+      case 'Gagal':
+        color = Colors.red;
+        break;
+      default:
+        color = Colors.grey;
     }
     return Chip(
       label: Text(text),
       backgroundColor: color.withOpacity(0.15),
-      labelStyle: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+      labelStyle: TextStyle(
+        color: color,
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+      ),
       side: BorderSide.none,
       padding: const EdgeInsets.symmetric(horizontal: 8),
     );

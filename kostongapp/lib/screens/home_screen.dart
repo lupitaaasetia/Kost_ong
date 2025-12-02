@@ -1181,7 +1181,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
         _loadAll(showLoading: false);
       } else {
-        _showSnackBar(result['message'] ?? 'Gagal menyimpan data', isError: true);
+        _showSnackBar(
+          result['message'] ?? 'Gagal menyimpan data',
+          isError: true,
+        );
       }
     } catch (e) {
       _showSnackBar('Terjadi kesalahan: $e', isError: true);
@@ -1198,7 +1201,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _showSnackBar('Item berhasil dihapus');
         _loadAll(showLoading: false);
       } else {
-        _showSnackBar(result['message'] ?? 'Gagal menghapus item', isError: true);
+        _showSnackBar(
+          result['message'] ?? 'Gagal menghapus item',
+          isError: true,
+        );
       }
     } catch (e) {
       _showSnackBar('Terjadi kesalahan: $e', isError: true);
@@ -1235,10 +1241,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         actions: [
           IconButton(icon: Icon(Icons.refresh), onPressed: () => _loadAll()),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout,
-          ),
+          IconButton(icon: Icon(Icons.logout), onPressed: _logout),
         ],
         backgroundColor: Colors.white,
         elevation: 1,
