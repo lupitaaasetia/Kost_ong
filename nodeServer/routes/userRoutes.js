@@ -37,6 +37,9 @@ router.post('/register', async (req, res) => {
       no_telepon,    
       role: userRole,
       verified: false,
+      jenis_kelamin,
+      tanggal_lahir,
+      alamat
     });
 
     res.status(201).json({ success: true, message: "Registrasi berhasil", data: user });
