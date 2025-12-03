@@ -80,7 +80,8 @@ class Kost {
   double rating;
   int jumlahReview;
   List<String> fotoKost;
-  int harga; // Menambahkan field harga yang biasanya penting
+  int harga;
+  String status; // Field status ditambahkan
 
   Kost({
     this.id,
@@ -95,6 +96,7 @@ class Kost {
     this.jumlahReview = 0,
     this.fotoKost = const [],
     this.harga = 0,
+    this.status = 'aktif',
   });
 
   factory Kost.fromJson(Map<String, dynamic> json) {
@@ -111,6 +113,7 @@ class Kost {
       jumlahReview: json['jumlah_review'] ?? 0,
       fotoKost: json['foto_kost'] != null ? List<String>.from(json['foto_kost']) : [],
       harga: json['harga_per_bulan'] ?? 0,
+      status: json['status'] ?? 'aktif',
     );
   }
 
@@ -123,6 +126,7 @@ class Kost {
       'fasilitas_kamar_default': fasilitasKamar,
       if (alamat != null) 'alamat': alamat!.toJson(),
       'harga_per_bulan': harga,
+      'status': status,
     };
   }
 }
