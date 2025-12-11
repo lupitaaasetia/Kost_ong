@@ -1,9 +1,16 @@
-2025/12/02-18:43:25.995 4aac Reusing MANIFEST C:\Users\mocha\AppData\Local\Temp\flutter_tools.5de8a093\flutter_tools_chrome_device.79d04b40\Default\Site Characteristics Database/MANIFEST-000001
-2025/12/02-18:43:26.002 4aac Recovering log #16
-2025/12/02-18:43:26.003 4aac Reusing old log C:\Users\mocha\AppData\Local\Temp\flutter_tools.5de8a093\flutter_tools_chrome_device.79d04b40\Default\Site Characteristics Database/000016.log 
-2025/12/02-18:43:26.003 4aac Delete type=0 #3
-2025/12/02-18:43:26.003 4aac Delete type=2 #4
-2025/12/02-18:43:26.003 4aac Delete type=2 #6
-2025/12/02-18:43:26.003 4aac Delete type=0 #6
-2025/12/02-18:43:26.004 4aac Delete type=0 #10
-2025/12/02-18:43:26.004 4aac Delete type=2 #11
+2025/12/11-09:25:09.353 4cdc Reusing MANIFEST C:\Users\ADMIN\AppData\Local\Temp\flutter_tools.a531850f\flutter_tools_chrome_device.1d58ce9\Default\Site Characteristics Database/MANIFEST-000001
+2025/12/11-09:25:09.355 2e24 Compacting 11@0 + 0@1 files
+2025/12/11-09:25:09.360 2e24 Generated table #28@0: 2 keys, 194 bytes
+2025/12/11-09:25:09.361 2e24 Compacted 11@0 + 0@1 files => 194 bytes
+2025/12/11-09:25:09.362 2e24 compacted to: files[ 0 1 0 0 0 0 0 ]
+2025/12/11-09:25:09.364 2e24 Delete type=2 #4
+2025/12/11-09:25:09.365 2e24 Delete type=2 #6
+2025/12/11-09:25:09.365 2e24 Delete type=2 #11
+2025/12/11-09:25:09.366 2e24 Delete type=2 #17
+2025/12/11-09:25:09.366 2e24 Delete type=2 #19
+2025/12/11-09:25:09.366 2e24 Delete type=2 #20
+2025/12/11-09:25:09.366 2e24 Delete type=2 #21
+2025/12/11-09:25:09.367 2e24 Delete type=2 #22
+2025/12/11-09:25:09.367 2e24 Delete type=2 #23
+2025/12/11-09:25:09.367 2e24 Delete type=2 #24
+2025/12/11-09:25:09.367 2e24 Delete type=2 #25
