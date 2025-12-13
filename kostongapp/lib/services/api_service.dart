@@ -64,7 +64,7 @@ class ApiService {
     }
   }
 
-// REGISTER (Updated)
+  // REGISTER (Updated)
   static Future<Map<String, dynamic>> register({
     required String namaLengkap,
     required String email,
@@ -89,7 +89,7 @@ class ApiService {
               'role': role,
               'jenis_kelamin': jenisKelamin, // Field baru
               'tanggal_lahir': tanggalLahir, // Field baru
-              'alamat': alamat,              // Nested object alamat
+              'alamat': alamat, // Nested object alamat
             }),
           )
           .timeout(_timeout);
@@ -142,6 +142,97 @@ class ApiService {
           'success': false,
           'message': 'Unauthorized',
           'requiresLogin': true,
+        };
+      } else {
+        try {
+          final body = jsonDecode(res.body);
+          return {'success': false, 'message': body['message'] ?? res.body};
+        } catch (_) {
+          return {'success': false, 'message': 'Server ${res.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> _postJson(
+    String endpoint,
+    String token,
+    Map<String, dynamic> data,
+  ) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final res = await http
+          .post(url, headers: _headers(token), body: jsonEncode(data))
+          .timeout(_timeout);
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final body = jsonDecode(res.body);
+        return {
+          'success': body['success'] ?? true,
+          'message': body['message'] ?? 'Success',
+          'data': body['data'],
+        };
+      } else {
+        try {
+          final body = jsonDecode(res.body);
+          return {'success': false, 'message': body['message'] ?? res.body};
+        } catch (_) {
+          return {'success': false, 'message': 'Server ${res.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> _putJson(
+    String endpoint,
+    String token,
+    Map<String, dynamic> data,
+  ) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final res = await http
+          .put(url, headers: _headers(token), body: jsonEncode(data))
+          .timeout(_timeout);
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        return {
+          'success': body['success'] ?? true,
+          'message': body['message'] ?? 'Updated successfully',
+          'data': body['data'],
+        };
+      } else {
+        try {
+          final body = jsonDecode(res.body);
+          return {'success': false, 'message': body['message'] ?? res.body};
+        } catch (_) {
+          return {'success': false, 'message': 'Server ${res.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> _deleteJson(
+    String endpoint,
+    String token,
+  ) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final res = await http
+          .delete(url, headers: _headers(token))
+          .timeout(_timeout);
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        return {
+          'success': body['success'] ?? true,
+          'message': body['message'] ?? 'Deleted successfully',
         };
       } else {
         try {
@@ -242,6 +333,222 @@ class ApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  // =====================
+  // KOST CRUD
+  // =====================
+
+  static Future<Map<String, dynamic>> fetchKostById(
+    String token,
+    String kostId,
+  ) => _getJson('/kost/$kostId', token);
+
+  static Future<Map<String, dynamic>> createKost(
+    String token,
+    Map<String, dynamic> data,
+  ) => _postJson('/kost', token, data);
+
+  static Future<Map<String, dynamic>> updateKost(
+    String token,
+    String kostId,
+    Map<String, dynamic> data,
+  ) => _putJson('/kost/$kostId', token, data);
+
+  static Future<Map<String, dynamic>> deleteKost(String token, String kostId) =>
+      _deleteJson('/kost/$kostId', token);
+
+  // =====================
+  // ROOM (KAMAR) CRUD
+  // =====================
+
+  static Future<Map<String, dynamic>> fetchRoomsByKost(
+    String token,
+    String kostId,
+  ) => _getJson('/kost/$kostId/rooms', token);
+
+  static Future<Map<String, dynamic>> createRoom(
+    String token,
+    Map<String, dynamic> data,
+  ) => _postJson('/rooms', token, data);
+
+  static Future<Map<String, dynamic>> updateRoom(
+    String token,
+    String roomId,
+    Map<String, dynamic> data,
+  ) => _putJson('/rooms/$roomId', token, data);
+
+  static Future<Map<String, dynamic>> deleteRoom(String token, String roomId) =>
+      _deleteJson('/rooms/$roomId', token);
+
+  // =====================
+  // BOOKING CRUD
+  // =====================
+
+  static Future<Map<String, dynamic>> fetchBookingById(
+    String token,
+    String bookingId,
+  ) => _getJson('/booking/$bookingId', token);
+
+  static Future<Map<String, dynamic>> createBooking(
+    String token,
+    Map<String, dynamic> data,
+  ) => _postJson('/booking', token, data);
+
+  static Future<Map<String, dynamic>> updateBookingStatus(
+    String token,
+    String bookingId,
+    String status,
+  ) => _putJson('/booking/$bookingId/status', token, {'status': status});
+
+  static Future<Map<String, dynamic>> deleteBooking(
+    String token,
+    String bookingId,
+  ) => _deleteJson('/booking/$bookingId', token);
+
+  // =====================
+  // REVIEW CRUD
+  // =====================
+
+  static Future<Map<String, dynamic>> fetchReviewByKost(
+    String token,
+    String kostId,
+  ) => _getJson('/review/kost/$kostId', token);
+
+  static Future<Map<String, dynamic>> createReview(
+    String token,
+    Map<String, dynamic> data,
+  ) => _postJson('/review', token, data);
+
+  static Future<Map<String, dynamic>> replyToReview(
+    String token,
+    String reviewId,
+    String reply,
+  ) => _putJson('/review/$reviewId/reply', token, {'reply': reply});
+
+  static Future<Map<String, dynamic>> deleteReview(
+    String token,
+    String reviewId,
+  ) => _deleteJson('/review/$reviewId', token);
+
+  // =====================
+  // STATISTICS & REPORTS
+  // =====================
+
+  static Future<Map<String, dynamic>> fetchStatistics(
+    String token,
+    String period,
+  ) async {
+    // Mock data untuk testing - ganti dengan endpoint asli
+    await Future.delayed(Duration(milliseconds: 500));
+
+    return {
+      'success': true,
+      'data': {
+        'total_revenue': 15000000,
+        'growth_rate': 12.5,
+        'total_bookings': 25,
+        'confirmed_bookings': 18,
+        'active_rooms': 15,
+        'total_rooms': 20,
+        'chart_data': [
+          {'label': 'Sen', 'value': 1200000},
+          {'label': 'Sel', 'value': 1500000},
+          {'label': 'Rab', 'value': 1800000},
+          {'label': 'Kam', 'value': 1600000},
+          {'label': 'Jum', 'value': 2100000},
+          {'label': 'Sab', 'value': 2500000},
+          {'label': 'Min', 'value': 2300000},
+        ],
+        'recent_payments': [
+          {
+            'id': '1',
+            'nama_penyewa': 'Budi Santoso',
+            'jumlah': 1500000,
+            'tanggal': '10 Des 2024',
+          },
+          {
+            'id': '2',
+            'nama_penyewa': 'Ani Wijaya',
+            'jumlah': 2000000,
+            'tanggal': '9 Des 2024',
+          },
+          {
+            'id': '3',
+            'nama_penyewa': 'Citra Dewi',
+            'jumlah': 1800000,
+            'tanggal': '8 Des 2024',
+          },
+        ],
+      },
+    };
+  }
+
+  // =====================
+  // PEMBAYARAN
+  // =====================
+
+  static Future<Map<String, dynamic>> createPembayaran(
+    String token,
+    Map<String, dynamic> data,
+  ) => _postJson('/pembayaran', token, data);
+
+  static Future<Map<String, dynamic>> updatePembayaranStatus(
+    String token,
+    String pembayaranId,
+    String status,
+  ) => _putJson('/pembayaran/$pembayaranId/status', token, {'status': status});
+
+  // =====================
+  // FAVORIT
+  // =====================
+
+  static Future<Map<String, dynamic>> addFavorit(String token, String kostId) =>
+      _postJson('/favorit', token, {'kost_id': kostId});
+
+  static Future<Map<String, dynamic>> removeFavorit(
+    String token,
+    String favoritId,
+  ) => _deleteJson('/favorit/$favoritId', token);
+
+  // =====================
+  // RIWAYAT
+  // =====================
+
+  // =====================
+  // KONTRAK
+  // =====================
+
+  static Future<Map<String, dynamic>> createKontrak(
+    String token,
+    Map<String, dynamic> data,
+  ) => _postJson('/kontrak', token, data);
+
+  static Future<Map<String, dynamic>> updateKontrak(
+    String token,
+    String kontrakId,
+    Map<String, dynamic> data,
+  ) => _putJson('/kontrak/$kontrakId', token, data);
+
+  // =====================
+  // USERS
+  // =====================
+
+  static Future<Map<String, dynamic>> fetchUserProfile(String token) =>
+      _getJson('/users/profile', token);
+
+  static Future<Map<String, dynamic>> updateUserProfile(
+    String token,
+    Map<String, dynamic> data,
+  ) => _putJson('/users/profile', token, data);
+
+  static Future<Map<String, dynamic>> changePassword(
+    String token,
+    String oldPassword,
+    String newPassword,
+  ) => _putJson('/users/password', token, {
+    'old_password': oldPassword,
+    'new_password': newPassword,
+  });
 
   // =========================
   // Predefined fetches

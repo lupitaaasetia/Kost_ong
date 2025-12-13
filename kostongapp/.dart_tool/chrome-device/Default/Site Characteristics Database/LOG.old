@@ -1,16 +1,15 @@
-2025/12/11-09:25:09.353 4cdc Reusing MANIFEST C:\Users\ADMIN\AppData\Local\Temp\flutter_tools.a531850f\flutter_tools_chrome_device.1d58ce9\Default\Site Characteristics Database/MANIFEST-000001
-2025/12/11-09:25:09.355 2e24 Compacting 11@0 + 0@1 files
-2025/12/11-09:25:09.360 2e24 Generated table #28@0: 2 keys, 194 bytes
-2025/12/11-09:25:09.361 2e24 Compacted 11@0 + 0@1 files => 194 bytes
-2025/12/11-09:25:09.362 2e24 compacted to: files[ 0 1 0 0 0 0 0 ]
-2025/12/11-09:25:09.364 2e24 Delete type=2 #4
-2025/12/11-09:25:09.365 2e24 Delete type=2 #6
-2025/12/11-09:25:09.365 2e24 Delete type=2 #11
-2025/12/11-09:25:09.366 2e24 Delete type=2 #17
-2025/12/11-09:25:09.366 2e24 Delete type=2 #19
-2025/12/11-09:25:09.366 2e24 Delete type=2 #20
-2025/12/11-09:25:09.366 2e24 Delete type=2 #21
-2025/12/11-09:25:09.367 2e24 Delete type=2 #22
-2025/12/11-09:25:09.367 2e24 Delete type=2 #23
-2025/12/11-09:25:09.367 2e24 Delete type=2 #24
-2025/12/11-09:25:09.367 2e24 Delete type=2 #25
+2025/12/14-01:23:40.662 3e3c Reusing MANIFEST C:\Users\ADMIN\AppData\Local\Temp\flutter_tools.3557b0f3\flutter_tools_chrome_device.11a8be97\Default\Site Characteristics Database/MANIFEST-000001
+2025/12/14-01:23:40.664 3e3c Recovering log #27
+2025/12/14-01:23:40.665 3e3c Reusing old log C:\Users\ADMIN\AppData\Local\Temp\flutter_tools.3557b0f3\flutter_tools_chrome_device.11a8be97\Default\Site Characteristics Database/000027.log 
+2025/12/14-01:23:40.668 3e3c Delete type=0 #3
+2025/12/14-01:23:40.669 3e3c Delete type=2 #4
+2025/12/14-01:23:40.669 3e3c Delete type=2 #6
+2025/12/14-01:23:40.669 3e3c Delete type=0 #6
+2025/12/14-01:23:40.669 3e3c Delete type=0 #10
+2025/12/14-01:23:40.669 3e3c Delete type=2 #11
+2025/12/14-01:23:40.669 3e3c Delete type=0 #16
+2025/12/14-01:23:40.670 3e3c Delete type=2 #17
+2025/12/14-01:23:40.670 3e3c Delete type=2 #19
+2025/12/14-01:23:40.670 3e3c Delete type=2 #20
+2025/12/14-01:23:40.670 3e3c Delete type=2 #21
+2025/12/14-01:23:40.670 3e3c Delete type=2 #28
