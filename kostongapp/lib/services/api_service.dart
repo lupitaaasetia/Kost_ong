@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
+import '../models/booking_model.dart'; // Pastikan import ini ada
 
 class ApiService {
   static String get baseUrl {
@@ -46,7 +47,7 @@ class ApiService {
           'message': body['message'] ?? '',
           'token': body['token'],
           'data': body['data'],
-          'role': body['data']?['role'] ?? 'pencari', // Get role from response
+          'role': body['data']?['role'] ?? 'pencari',
         };
       } else {
         try {
@@ -64,7 +65,7 @@ class ApiService {
     }
   }
 
-  // REGISTER (Updated)
+  // REGISTER
   static Future<Map<String, dynamic>> register({
     required String namaLengkap,
     required String email,
@@ -87,9 +88,9 @@ class ApiService {
               'password': password,
               'no_telepon': noTelepon,
               'role': role,
-              'jenis_kelamin': jenisKelamin, // Field baru
-              'tanggal_lahir': tanggalLahir, // Field baru
-              'alamat': alamat, // Nested object alamat
+              'jenis_kelamin': jenisKelamin,
+              'tanggal_lahir': tanggalLahir,
+              'alamat': alamat,
             }),
           )
           .timeout(_timeout);
@@ -254,27 +255,7 @@ class ApiService {
     String token,
     String type,
   ) async {
-    try {
-      final res = await http.get(
-        Uri.parse('$baseUrl/$type'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (res.statusCode == 200) {
-        final body = jsonDecode(res.body);
-        if (body is List) {
-          return {'success': true, 'data': body};
-        } else if (body is Map && body.containsKey('data')) {
-          return {'success': true, 'data': body['data']};
-        } else {
-          return {'success': true, 'data': body};
-        }
-      }
-
-      return jsonDecode(res.body);
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
+    return _getJson('/$type', token);
   }
 
   static Future<Map<String, dynamic>> createData(
@@ -282,19 +263,7 @@ class ApiService {
     String type,
     Map<String, dynamic> data,
   ) async {
-    try {
-      final res = await http.post(
-        Uri.parse('$baseUrl/$type'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(data),
-      );
-      return jsonDecode(res.body);
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
+    return _postJson('/$type', token, data);
   }
 
   static Future<Map<String, dynamic>> updateData(
@@ -303,19 +272,7 @@ class ApiService {
     String id,
     Map<String, dynamic> data,
   ) async {
-    try {
-      final res = await http.put(
-        Uri.parse('$baseUrl/$type/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(data),
-      );
-      return jsonDecode(res.body);
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
+    return _putJson('/$type/$id', token, data);
   }
 
   static Future<Map<String, dynamic>> deleteData(
@@ -323,15 +280,7 @@ class ApiService {
     String type,
     String id,
   ) async {
-    try {
-      final res = await http.delete(
-        Uri.parse('$baseUrl/$type/$id'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      return jsonDecode(res.body);
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
+    return _deleteJson('/$type/$id', token);
   }
 
   // =====================
@@ -405,6 +354,24 @@ class ApiService {
     String bookingId,
   ) => _deleteJson('/booking/$bookingId', token);
 
+  // Fungsi untuk mengambil list booking user (Dipakai di History Screen)
+  static Future<List<BookingModel>> fetchUserBookings(String token, String userId) async {
+    final response = await _getJson('/booking/user/$userId', token);
+    
+    if (response['success'] == false) {
+      throw Exception(response['message']);
+    }
+
+    // _getJson sudah menghandle parsing body, jadi kita tinggal cek 'data'
+    final data = response['data'];
+
+    if (data is List) {
+       return data.map((item) => BookingModel.fromJson(item)).toList();
+    }
+    
+    return [];
+  }
+
   // =====================
   // REVIEW CRUD
   // =====================
@@ -439,7 +406,7 @@ class ApiService {
     String period,
   ) async {
     // Mock data untuk testing - ganti dengan endpoint asli
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     return {
       'success': true,
@@ -509,10 +476,6 @@ class ApiService {
     String token,
     String favoritId,
   ) => _deleteJson('/favorit/$favoritId', token);
-
-  // =====================
-  // RIWAYAT
-  // =====================
 
   // =====================
   // KONTRAK

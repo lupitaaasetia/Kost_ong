@@ -6,18 +6,25 @@ const verifyToken = require('../middleware/authMiddleware');
 // ✅ GET semua booking
 router.get('/', async (req, res) => {
   try {
-    const bookings = await Booking.find().populate('user_id kost_id');
+    // Menggunakan id_user & id_kost sesuai model Flutter
+    const bookings = await Booking.find()
+      .populate('id_user')
+      .populate('id_kost'); 
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-// ✅ GET booking per user
-router.get('/user/:user_id', verifyToken, async (req, res) => {
+// ✅ GET booking per user (Endpoint yang akan dipakai di History Screen)
+router.get('/user/:id_user', verifyToken, async (req, res) => {
   try {
-    const { user_id } = req.params;
-    const bookings = await Booking.find({ user_id }).populate('kost_id');
+    const { id_user } = req.params;
+    // Cari berdasarkan id_user, dan populate data id_kost agar nama kost muncul
+    const bookings = await Booking.find({ id_user: id_user })
+      .populate('id_kost') 
+      .sort({ created_at: -1 }); // Urutkan dari yang terbaru
+
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -28,7 +35,8 @@ router.get('/user/:user_id', verifyToken, async (req, res) => {
 router.post('/', verifyToken, async (req, res) => {
   try {
     const payload = req.body;
-    payload.user_id = req.user.id;
+    // Pastikan menyimpan dengan field id_user
+    payload.id_user = req.user.id; 
     const booking = await Booking.create(payload);
     res.json(booking);
   } catch (err) {
