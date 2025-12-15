@@ -44,10 +44,8 @@ class Review {
 class ReviewService {
   static List<Review> getReviewsForKost(String kostId) {
     
-    // Konversi string ID ke int untuk switch case sederhana
     int idInt = 0;
     try {
-      // Mengambil karakter terakhir jika ID berupa string panjang
       idInt = int.parse(kostId.replaceAll(RegExp(r'[^0-9]'), '')) % 5; 
     } catch (e) {
       idInt = kostId.hashCode % 5;
@@ -59,19 +57,19 @@ class ReviewService {
           Review(
             id: 'r1',
             userName: 'Putri Mahardika',
-            userImage: 'https://i.pravatar.cc/150?img=5',
+            userImage: 'https://picsum.photos/seed/putri/150',
             rating: 5.0,
             date: '2 Hari lalu',
             content: 'Kamar mandinya bersih banget, air lancar jaya. Ibu kostnya juga suka kasih makanan.',
             likes: 15,
             replies: [
-               ReviewReply(userName: 'Ibu Kost', userImage: 'https://i.pravatar.cc/150?img=1', content: 'Makasih neng Putri!', date: '1 Hari lalu', isOwner: true),
+               ReviewReply(userName: 'Ibu Kost', userImage: 'https://picsum.photos/seed/ibukost/150', content: 'Makasih neng Putri!', date: '1 Hari lalu', isOwner: true),
             ]
           ),
           Review(
             id: 'r2',
             userName: 'Dedi Corbuzier',
-            userImage: 'https://i.pravatar.cc/150?img=11',
+            userImage: 'https://picsum.photos/seed/dedi/150',
             rating: 5.0,
             date: '1 Minggu lalu',
             content: 'Gym dekat sini, mantap buat olah raga pagi. Parkiran luas buat mobil.',
@@ -84,7 +82,7 @@ class ReviewService {
           Review(
             id: 'r3',
             userName: 'Siti Badriah',
-            userImage: 'https://i.pravatar.cc/150?img=9',
+            userImage: 'https://picsum.photos/seed/siti/150',
             rating: 4.0,
             date: '3 Hari lalu',
             content: 'Lingkungan nyaman, cuma agak berisik kalau ada yang lewat lorong.',
@@ -93,13 +91,13 @@ class ReviewService {
           Review(
             id: 'r4',
             userName: 'Joko Anwar',
-            userImage: 'https://i.pravatar.cc/150?img=8',
+            userImage: 'https://picsum.photos/seed/joko/150',
             rating: 3.0,
             date: '1 Bulan lalu',
             content: 'WiFi sering putus nyambung pas hujan.',
             likes: 0,
              replies: [
-               ReviewReply(userName: 'Pemilik', userImage: 'https://i.pravatar.cc/150?img=1', content: 'Maaf mas, teknisi sudah kami panggil.', date: '3 Minggu lalu', isOwner: true),
+               ReviewReply(userName: 'Pemilik', userImage: 'https://picsum.photos/seed/pemilik/150', content: 'Maaf mas, teknisi sudah kami panggil.', date: '3 Minggu lalu', isOwner: true),
             ]
           ),
         ];
@@ -109,7 +107,7 @@ class ReviewService {
            Review(
             id: 'r5',
             userName: 'Bambang Pamungkas',
-            userImage: 'https://i.pravatar.cc/150?img=12',
+            userImage: 'https://picsum.photos/seed/bambang/150',
             rating: 4.0,
             date: '5 Hari lalu',
             content: 'Sesuai harga lah, yang penting bisa tidur nyenyak.',
@@ -122,7 +120,7 @@ class ReviewService {
            Review(
             id: 'r6',
             userName: 'Rina Nose',
-            userImage: 'https://i.pravatar.cc/150?img=44',
+            userImage: 'https://picsum.photos/seed/rina/150',
             rating: 5.0,
             date: 'Baru saja',
             content: 'Wah kost baru, perabotannya masih wangi toko. Suka banget desainnya!',
@@ -135,7 +133,7 @@ class ReviewService {
           Review(
             id: 'r7',
             userName: 'Anonim',
-            userImage: 'https://i.pravatar.cc/150?img=33',
+            userImage: 'https://picsum.photos/seed/anonim/150',
             rating: 4.5,
             date: '1 Hari lalu',
             content: 'Overall oke, akses 24 jam jadi nilai plus.',

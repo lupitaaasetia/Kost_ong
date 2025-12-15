@@ -17,7 +17,6 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _loading = false;
 
-  // Controllers
   late TextEditingController _namaKostController;
   late TextEditingController _alamatController;
   late TextEditingController _deskripsiController;
@@ -51,15 +50,11 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
     _initData();
   }
 
-  // [PERBAIKAN KRITIS] Memuat data lama dengan aman
   void _initData() {
-    // Helper untuk menangani data yang mungkin null, Map, atau String
     String getString(String key) {
       final value = widget.kostData?[key];
       if (value == null) return '';
       if (value is String) return value;
-
-      // FIX: Jika alamat berbentuk Map (JSON Object), ambil string representatifnya
       if (value is Map) {
         return value['jalan'] ?? value['kota'] ?? value.toString();
       }
@@ -67,25 +62,19 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
     }
 
     _namaKostController = TextEditingController(text: getString('nama_kost'));
-    _alamatController = TextEditingController(
-      text: getString('alamat'),
-    ); // Sudah aman
+    _alamatController = TextEditingController(text: getString('alamat'));
     _deskripsiController = TextEditingController(text: getString('deskripsi'));
-
-    // Handle harga (bisa int atau string dari API)
     _hargaController = TextEditingController(
       text:
           widget.kostData?['harga']?.toString() ??
           widget.kostData?['harga_per_bulan']?.toString() ??
           '',
     );
-
     _kontakController = TextEditingController(text: getString('kontak'));
 
     _selectedJenisKost = widget.kostData?['jenis_kost'];
     _selectedStatus = widget.kostData?['status'];
 
-    // Handle Fasilitas (bisa String 'WiFi, AC' atau List ['WiFi', 'AC'])
     final rawFasilitas = widget.kostData?['fasilitas'];
     if (rawFasilitas != null) {
       if (rawFasilitas is List) {
@@ -110,13 +99,14 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _loading = true);
+    if (mounted) {
+      setState(() => _loading = true);
+    }
 
     final Map<String, dynamic> data = {
       'nama_kost': _namaKostController.text,
-      // Alamat dikirim sebagai String ke backend, meskipun asalnya dari database bisa Map
       'alamat': _alamatController.text,
       'deskripsi': _deskripsiController.text,
       'harga': int.tryParse(_hargaController.text.replaceAll('.', '')) ?? 0,
@@ -130,7 +120,6 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
       Map<String, dynamic> result;
 
       if (widget.kostData != null) {
-        // Ambil ID dengan aman (Cek 'id' dan '_id' untuk Mongo)
         final id =
             widget.kostData!['id']?.toString() ??
             widget.kostData!['_id']?.toString();
@@ -171,7 +160,9 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -225,7 +216,6 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
                     validator: (v) => v?.isEmpty ?? true ? 'Wajib diisi' : null,
                   ),
                   SizedBox(height: 16),
-                  // Dropdowns
                   Row(
                     children: [
                       Expanded(

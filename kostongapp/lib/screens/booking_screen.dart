@@ -20,7 +20,6 @@ class _BookingScreenState extends State<BookingScreen> {
   String? _selectedRoom;
   final TextEditingController _notesController = TextEditingController();
 
-  // Sample rooms data
   final List<Map<String, dynamic>> _availableRooms = [
     {
       'number': 'A1',
@@ -61,7 +60,6 @@ class _BookingScreenState extends State<BookingScreen> {
     super.dispose();
   }
 
-  // FIXED: Handle berbagai tipe data untuk harga
   int _getHargaAsInt() {
     try {
       final harga = widget.kostData['harga'];
@@ -70,14 +68,12 @@ class _BookingScreenState extends State<BookingScreen> {
       if (harga is int) return harga;
       if (harga is double) return harga.toInt();
       if (harga is String) {
-        // Remove non-numeric characters
         final cleanedHarga = harga.replaceAll(RegExp(r'[^0-9]'), '');
         return int.tryParse(cleanedHarga) ?? 0;
       }
 
       return 0;
     } catch (e) {
-      print('Error parsing harga: $e');
       return 0;
     }
   }
@@ -87,10 +83,9 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   int _calculateDeposit() {
-    return _getHargaAsInt(); // Deposit 1 bulan
+    return _getHargaAsInt();
   }
 
-  // FIXED: Format harga dengan benar
   String _formatHarga(int harga) {
     return NumberFormat.currency(
       locale: 'id',
@@ -114,7 +109,6 @@ class _BookingScreenState extends State<BookingScreen> {
         return;
       }
 
-      // FIXED: Pastikan semua data dalam format yang benar
       final bookingData = {
         'kost_id':
             widget.kostData['_id']?.toString() ??
@@ -141,7 +135,7 @@ class _BookingScreenState extends State<BookingScreen> {
           builder: (context) => PaymentScreen(bookingData: bookingData),
         ),
       ).then((result) {
-        if (result == 'payment_success') {
+        if (result == 'payment_success' && mounted) {
           Navigator.pop(context, 'booking_success');
         }
       });
@@ -186,7 +180,7 @@ class _BookingScreenState extends State<BookingScreen> {
       },
     );
 
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _checkInDate = picked;
         if (_checkOutDate != null && _checkOutDate!.isBefore(_checkInDate!)) {
@@ -215,7 +209,7 @@ class _BookingScreenState extends State<BookingScreen> {
       },
     );
 
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _checkOutDate = picked;
         _calculateDuration();
@@ -226,10 +220,12 @@ class _BookingScreenState extends State<BookingScreen> {
   void _calculateDuration() {
     if (_checkInDate != null && _checkOutDate != null) {
       final difference = _checkOutDate!.difference(_checkInDate!).inDays;
-      setState(() {
-        _duration = (difference / 30).ceil();
-        if (_duration < 1) _duration = 1;
-      });
+      if (mounted) {
+        setState(() {
+          _duration = (difference / 30).ceil();
+          if (_duration < 1) _duration = 1;
+        });
+      }
     }
   }
 

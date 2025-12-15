@@ -2,14 +2,13 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const verifyToken = require('../middleware/authMiddleware');
 
 // ✅ REGISTER
 router.post('/register', async (req, res) => {
   try {
-    // 1. Terima data sesuai nama field baru (bahasa Indonesia)
-    const { nama_lengkap, email, password, no_telepon, role } = req.body;
+    const { nama_lengkap, email, password, no_telepon, role, jenis_kelamin, tanggal_lahir, alamat } = req.body;
 
-    // 2. Validasi input (Pastikan field ini tidak kosong/undefined)
     if (!nama_lengkap || !email || !password || !no_telepon) {
         return res.status(400).json({ 
             success: false,
@@ -17,7 +16,6 @@ router.post('/register', async (req, res) => {
         });
     }
 
-    // 3. Cek duplikasi email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
         return res.status(400).json({ 
@@ -26,10 +24,8 @@ router.post('/register', async (req, res) => {
         });
     }
 
-    // 4. Set Role
     const userRole = (role === 'pemilik') ? 'pemilik' : 'pencari';
 
-    // 5. Simpan ke Database
     const user = await User.create({ 
       nama_lengkap,  
       email, 
@@ -45,7 +41,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({ success: true, message: "Registrasi berhasil", data: user });
 
   } catch (err) {
-    console.error("Register Error:", err); // Print error di terminal Node.js untuk debugging
+    console.error("Register Error:", err);
     res.status(500).json({ 
         success: false,
         message: 'Server error saat registrasi', 
@@ -54,21 +50,34 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ✅ LOGIN (Update sedikit untuk konsistensi respons)
+// ✅ LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User tidak ditemukan' });
+    if (!user) return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
 
-    // Note: Di produksi sebaiknya gunakan bcrypt untuk compare password
-    if (user.password !== password) return res.status(401).json({ message: 'Password salah' });
+    if (user.password !== password) return res.status(401).json({ success: false, message: 'Password salah' });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
     
     res.json({ success: true, message: 'Login berhasil', token, data: user });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  }
+});
+
+// ✅ GET USER PROFILE
+router.get('/profile', verifyToken, async (req, res) => {
+  try {
+    // req.user.id didapat dari middleware verifyToken
+    const user = await User.findById(req.user.id).select('-password'); // -password untuk tidak mengirim password
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
+    }
+    res.json({ success: true, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 import 'booking_success_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -25,11 +27,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'color': Colors.blue,
       'accounts': [
         {'bank': 'BCA', 'number': '1234567890', 'name': 'PT Kost Indonesia'},
-        {
-          'bank': 'Mandiri',
-          'number': '0987654321',
-          'name': 'PT Kost Indonesia',
-        },
+        {'bank': 'Mandiri', 'number': '0987654321', 'name': 'PT Kost Indonesia'},
         {'bank': 'BNI', 'number': '1122334455', 'name': 'PT Kost Indonesia'},
       ],
     },
@@ -52,13 +50,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
   };
 
   Future<void> _pickProofImage() async {
-    // Simulasi upload gambar
     await Future.delayed(const Duration(milliseconds: 500));
-    setState(() {
-      _proofUploaded = true;
-    });
-
     if (mounted) {
+      setState(() {
+        _proofUploaded = true;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -76,9 +73,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _processPayment() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // Validation for proof image (except cash)
     if (_selectedMethod != 'cash' && !_proofUploaded) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -90,53 +86,76 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    setState(() {
-      _isProcessing = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isProcessing = true;
+      });
+    }
 
     try {
-      // Simulasi proses pembayaran
-      await Future.delayed(const Duration(seconds: 2));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
 
-      if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Pembayaran berhasil!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-
-        // Navigate to success screen
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookingSuccessScreen(
-              kostData: widget.bookingData,
-              startDate: DateTime.parse(widget.bookingData['check_in_date']),
-              duration: widget.bookingData['duration'],
-              totalPrice:
-                  widget.bookingData['total_price'] +
-                  widget.bookingData['deposit'],
-              paymentMethod: _paymentMethods[_selectedMethod]!['name'],
-            ),
-          ),
-        );
+      if (token == null) {
+        throw Exception("Sesi berakhir, silakan login ulang.");
       }
+
+      // ✅ PERBAIKAN: Menyamakan nama field dengan model backend (Booking.js)
+      final apiData = {
+        'kost_id': widget.bookingData['kost_id'],
+        'start_date': widget.bookingData['check_in_date'],
+        'end_date': widget.bookingData['check_out_date'],
+        'total': widget.bookingData['total_price'] + widget.bookingData['deposit'],
+        'status': 'pending',
+        // Field di bawah ini mungkin tidak ada di schema, tapi tidak apa-apa dikirim
+        'metode_pembayaran': _paymentMethods[_selectedMethod]!['name'],
+        'catatan': widget.bookingData['notes'],
+      };
+
+      final response = await ApiService.createBooking(token, apiData);
+
+      if (response['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Pembayaran & Booking berhasil!'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingSuccessScreen(
+                  kostData: widget.bookingData,
+                  startDate: DateTime.parse(widget.bookingData['check_in_date']),
+                  duration: widget.bookingData['duration'],
+                  totalPrice: widget.bookingData['total_price'] + widget.bookingData['deposit'],
+                  paymentMethod: _paymentMethods[_selectedMethod]!['name'],
+                ),
+              ),
+            );
+          }
+        }
+      } else {
+        throw Exception(response['message'] ?? 'Gagal membuat booking');
+      }
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal memproses pembayaran: ${e.toString()}'),
+            content: Text('Gagal: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -287,12 +306,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 color: isSelected
-                    ? info['color'].withOpacity(0.1)
+                    ? (info['color'] as Color).withOpacity(0.1)
                     : Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side: BorderSide(
-                    color: isSelected ? info['color'] : Colors.grey.shade300,
+                    color: isSelected ? (info['color'] as Color) : Colors.grey.shade300,
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -308,17 +327,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: info['color'].withOpacity(0.1),
+                      color: (info['color'] as Color).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(info['icon'], color: info['color']),
+                    child: Icon(info['icon'] as IconData, color: info['color'] as Color),
                   ),
                   title: Text(
-                    info['name'],
+                    info['name'] as String,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   trailing: isSelected
-                      ? Icon(Icons.check_circle, color: info['color'])
+                      ? Icon(Icons.check_circle, color: info['color'] as Color)
                       : null,
                 ),
               );
@@ -342,7 +361,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.info_outline, color: info['color']),
+                Icon(Icons.info_outline, color: info['color'] as Color),
                 const SizedBox(width: 8),
                 const Text(
                   'Detail Pembayaran',
@@ -357,7 +376,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 12),
-              ...info['accounts'].map<Widget>((account) {
+              ...(info['accounts'] as List<Map<String, String>>).map<Widget>((account) {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(12),
@@ -373,7 +392,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            account['bank'],
+                            account['bank']!,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -383,7 +402,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             icon: const Icon(Icons.copy, size: 20),
                             onPressed: () {
                               Clipboard.setData(
-                                ClipboardData(text: account['number']),
+                                ClipboardData(text: account['number']!),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -397,7 +416,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ],
                       ),
                       Text(
-                        account['number'],
+                        account['number']!,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -419,7 +438,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 12),
-              ...info['wallets'].map<Widget>((wallet) {
+              ...(info['wallets'] as List<Map<String, String>>).map<Widget>((wallet) {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(12),
@@ -435,14 +454,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            wallet['name'],
+                            wallet['name']!,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            wallet['number'],
+                            wallet['number']!,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -454,7 +473,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         icon: const Icon(Icons.copy, size: 20),
                         onPressed: () {
                           Clipboard.setData(
-                            ClipboardData(text: wallet['number']),
+                            ClipboardData(text: wallet['number']!),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

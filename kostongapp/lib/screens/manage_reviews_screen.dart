@@ -32,24 +32,27 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
   }
 
   Future<void> _loadReviews() async {
-    setState(() => _loading = true);
+    if (mounted) {
+      setState(() => _loading = true);
+    }
 
     final result = await ApiService.fetchReview(widget.token);
 
-    if (result['success'] == true) {
-      setState(() {
-        _allReviews = result['data'] ?? [];
-        _filterAndSortReviews();
-        _loading = false;
-      });
-    } else {
-      setState(() => _loading = false);
-      _showSnackBar(result['message'] ?? 'Gagal memuat review', isError: true);
+    if (mounted) {
+      if (result['success'] == true) {
+        setState(() {
+          _allReviews = result['data'] ?? [];
+          _filterAndSortReviews();
+          _loading = false;
+        });
+      } else {
+        setState(() => _loading = false);
+        _showSnackBar(result['message'] ?? 'Gagal memuat review', isError: true);
+      }
     }
   }
 
   void _filterAndSortReviews() {
-    // Filter by rating
     _filteredReviews = _selectedRating == null
         ? List.from(_allReviews)
         : _allReviews.where((r) {
@@ -64,7 +67,6 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
             return false;
           }).toList();
 
-    // Sort
     switch (_sortBy) {
       case 'Terbaru':
         _filteredReviews.sort(
@@ -104,7 +106,12 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
     return 0;
   }
 
-  Future<void> _deleteReview(String reviewId) async {
+  Future<void> _deleteReview(String? reviewId) async {
+    if (reviewId == null) {
+      _showSnackBar('ID Review tidak valid', isError: true);
+      return;
+    }
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -127,14 +134,16 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
     if (confirm == true) {
       final result = await ApiService.deleteReview(widget.token, reviewId);
 
-      if (result['success'] == true) {
-        _showSnackBar('Review berhasil dihapus');
-        _loadReviews();
-      } else {
-        _showSnackBar(
-          result['message'] ?? 'Gagal menghapus review',
-          isError: true,
-        );
+      if (mounted) {
+        if (result['success'] == true) {
+          _showSnackBar('Review berhasil dihapus');
+          _loadReviews();
+        } else {
+          _showSnackBar(
+            result['message'] ?? 'Gagal menghapus review',
+            isError: true,
+          );
+        }
       }
     }
   }
@@ -146,22 +155,26 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
         review: review,
         token: widget.token,
         onSuccess: () {
-          Navigator.pop(context);
-          _showSnackBar('Balasan berhasil dikirim');
-          _loadReviews();
+          if (mounted) {
+            Navigator.pop(context);
+            _showSnackBar('Balasan berhasil dikirim');
+            _loadReviews();
+          }
         },
       ),
     );
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.red[700] : Colors.green[700],
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   double _calculateAverageRating() {
@@ -406,8 +419,8 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
         review['reply'] != null &&
         review['reply'].toString().isNotEmpty &&
         review['reply'].toString() != 'null';
+    final reviewId = review['id']?.toString() ?? review['_id']?.toString();
 
-    // Format date
     String formattedDate = '-';
     try {
       if (review['created_at'] != null) {
@@ -499,7 +512,7 @@ class _ManageReviewsScreenState extends State<ManageReviewsScreen> {
                     if (value == 'reply') {
                       _replyToReview(review);
                     } else if (value == 'delete') {
-                      _deleteReview(review['id'].toString());
+                      _deleteReview(reviewId);
                     }
                   },
                 ),
@@ -613,25 +626,43 @@ class _ReplyDialogState extends State<ReplyDialog> {
       return;
     }
 
-    setState(() => _loading = true);
+    if (mounted) {
+      setState(() => _loading = true);
+    }
 
-    final result = await ApiService.replyToReview(
-      widget.token,
-      widget.review['id'].toString(),
-      _controller.text,
-    );
-
-    setState(() => _loading = false);
-
-    if (result['success'] == true) {
-      widget.onSuccess();
-    } else {
+    final reviewId = widget.review['id']?.toString() ?? widget.review['_id']?.toString();
+    if (reviewId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'Gagal mengirim balasan'),
+          content: Text('ID Review tidak valid'),
           backgroundColor: Colors.red[700],
         ),
       );
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+      return;
+    }
+
+    final result = await ApiService.replyToReview(
+      widget.token,
+      reviewId,
+      _controller.text,
+    );
+
+    if (mounted) {
+      setState(() => _loading = false);
+
+      if (result['success'] == true) {
+        widget.onSuccess();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal mengirim balasan'),
+            backgroundColor: Colors.red[700],
+          ),
+        );
+      }
     }
   }
 

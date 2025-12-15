@@ -1,6 +1,5 @@
 // screens/chat_list_screen.dart
 import 'package:flutter/material.dart';
-import '../models/chat.dart';
 import '../services/chat_services.dart';
 import 'chat_detail_screen.dart';
 import 'package:intl/intl.dart';
@@ -18,6 +17,59 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   List<ChatRoom> _chatRooms = [];
+
+
+  > kostong-backend@1.0.0 start
+  > node server.js
+
+  Server running on port 3000
+  MongoDB connected
+  ❌ VALIDASI GAGAL! Detail:
+  {
+  "operatorName": "$jsonSchema",
+  "schemaRulesNotSatisfied": [
+  {
+  "operatorName": "required",
+  "specifiedAs": {
+  "required": [
+  "_id",
+  "biaya_admin",
+  "catatan",
+  "created_at",
+  "durasi",
+  "expired_at",
+  "harga_total",
+  "kamar_id",
+  "kost_id",
+  "metode_pembayaran",
+  "nomor_booking",
+  "status_booking",
+  "tanggal_mulai",
+  "tanggal_selesai",
+  "tipe_durasi",
+  "total_bayar",
+  "updated_at",
+  "user_id"
+  ]
+  },
+  "missingProperties": [
+  "biaya_admin",
+  "created_at",
+  "durasi",
+  "expired_at",
+  "harga_total",
+  "kamar_id",
+  "nomor_booking",
+  "status_booking",
+  "tanggal_mulai",
+  "tanggal_selesai",
+  "tipe_durasi",
+  "total_bayar",
+  "updated_at"
+  ]
+  }
+  ]
+  }
 
   @override
   void initState() {

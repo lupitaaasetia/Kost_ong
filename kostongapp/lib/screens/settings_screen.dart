@@ -9,7 +9,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<ProfileTabViewModel>.value(
+    return ChangeNotifierProvider.value(
       value: viewModel,
       child: Scaffold(
         appBar: AppBar(
@@ -184,8 +184,6 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              newEmailController.dispose();
-              passwordController.dispose();
               Navigator.pop(context);
             },
             child: Text('Batal'),
@@ -197,8 +195,8 @@ class SettingsScreen extends StatelessWidget {
                   newEmailController.text,
                   passwordController.text,
                 );
-                Navigator.pop(context);
                 if (context.mounted) {
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(success ? 'Email berhasil diubah!' : 'Gagal mengubah email.'),
@@ -206,8 +204,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   );
                 }
-                newEmailController.dispose();
-                passwordController.dispose();
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF667eea)),
@@ -215,7 +211,10 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      newEmailController.dispose();
+      passwordController.dispose();
+    });
   }
 
   void _showChangePasswordDialog(BuildContext context, ProfileTabViewModel vm) {
@@ -275,9 +274,6 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              oldPasswordController.dispose();
-              newPasswordController.dispose();
-              confirmPasswordController.dispose();
               Navigator.pop(context);
             },
             child: Text('Batal'),
@@ -290,8 +286,8 @@ class SettingsScreen extends StatelessWidget {
                   newPasswordController.text,
                   confirmPasswordController.text,
                 );
-                Navigator.pop(context);
                 if (context.mounted) {
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(success ? 'Password berhasil diubah!' : 'Gagal mengubah password.'),
@@ -299,9 +295,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   );
                 }
-                oldPasswordController.dispose();
-                newPasswordController.dispose();
-                confirmPasswordController.dispose();
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF667eea)),
@@ -309,13 +302,17 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      oldPasswordController.dispose();
+      newPasswordController.dispose();
+      confirmPasswordController.dispose();
+    });
   }
 
   void _showDeleteConfirmDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Hapus Akun'),
           content: const Text(
@@ -324,7 +321,7 @@ class SettingsScreen extends StatelessWidget {
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
               child: const Text('Ya, Hapus Akun'),
@@ -334,8 +331,10 @@ class SettingsScreen extends StatelessWidget {
               ),
               onPressed: () {
                 print("Account Deletion Confirmed");
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],

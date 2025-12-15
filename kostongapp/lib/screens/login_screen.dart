@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,7 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool loading = false;
   bool _obscurePassword = true;
 
-  void _login() async {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -23,11 +25,21 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final res = await ApiService.login(emailC.text.trim(), passC.text);
+    
+    if (!mounted) return;
+
     setState(() => loading = false);
 
     if (res['success'] == true) {
       final token = res['token'] as String?;
       final userData = res['data'];
+
+      if (token != null && userData != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+        await prefs.setString('user', jsonEncode(userData));
+      }
+
       final role = res['role'] ?? userData?['role'] ?? 'pencari';
 
       if (role == 'pemilik') {
@@ -52,34 +64,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Cek responsivitas di sini
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 800) {
-            // --- DESKTOP WEB VIEW (ROW: Gambar Kiri, Form Kanan) ---
+            // --- DESKTOP WEB VIEW ---
             return Row(
               children: [
-                // Sisi Kiri: Gambar / Logo Besar
                 Expanded(
                   flex: 1,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.home_work,
-                            size: 120,
-                            color: Colors.white,
-                          ),
+                          Icon(Icons.home_work, size: 120, color: Colors.white),
                           SizedBox(height: 20),
                           Text(
                             'Selamat Datang di Kostong',
@@ -92,26 +98,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 10),
                           Text(
                             'Cari kost impianmu dengan mudah',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 18,
-                            ),
+                            style: TextStyle(color: Colors.white70, fontSize: 18),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-                // Sisi Kanan: Form Login
                 Expanded(
                   flex: 1,
                   child: Container(
                     color: Colors.white,
                     child: Center(
-                      child: Container(
-                        width: 450, // Batas lebar form di desktop
-                        padding: EdgeInsets.all(40),
-                        child: _buildLoginForm(isMobile: false),
+                      child: SingleChildScrollView( // Tambahkan scroll di sini juga
+                        padding: const EdgeInsets.all(40),
+                        child: Container(
+                          width: 450,
+                          child: _buildLoginForm(isMobile: false),
+                        ),
                       ),
                     ),
                   ),
@@ -119,9 +123,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             );
           } else {
-            // --- MOBILE VIEW (Card di Tengah) ---
+            // --- MOBILE VIEW ---
             return Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                   begin: Alignment.topLeft,
@@ -130,15 +134,15 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: SafeArea(
                 child: Center(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(20),
+                  child: SingleChildScrollView( // Kunci untuk menghindari overflow
+                    padding: const EdgeInsets.all(20),
                     child: Card(
                       elevation: 12,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Container(
-                        padding: EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(32),
                         child: _buildLoginForm(isMobile: true),
                       ),
                     ),
@@ -152,30 +156,23 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Widget Form Login (Dipisah agar bisa dipanggil di Mobile & Desktop)
   Widget _buildLoginForm({required bool isMobile}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Logo & Judul hanya muncul di dalam card untuk Mobile
-        // Untuk Desktop sudah ada di sisi kiri
         if (isMobile) ...[
           Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF667eea), Color(0xFF764ba2)],
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.home_work,
-              size: 48,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.home_work, size: 48, color: Colors.white),
           ),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Kostong',
             style: TextStyle(
               fontSize: 32,
@@ -183,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
               color: Color(0xFF667eea),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
         ],
         Text(
           'Login ke akun Anda',
@@ -193,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: isMobile ? Colors.grey[700] : Colors.black87,
           ),
         ),
-        SizedBox(height: 32),
+        const SizedBox(height: 32),
 
         Form(
           key: _formKey,
@@ -203,10 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: emailC,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Color(0xFF667eea),
-                  ),
+                  prefixIcon: const Icon(Icons.email, color: Color(0xFF667eea)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
@@ -217,10 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Color(0xFF667eea),
-                      width: 2,
-                    ),
+                    borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
@@ -232,21 +223,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: passC,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: Icon(
-                    Icons.lock,
-                    color: Color(0xFF667eea),
-                  ),
+                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF667eea)),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
                       color: Colors.grey[600],
                     ),
                     onPressed: () {
@@ -265,50 +251,41 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Color(0xFF667eea),
-                      width: 2,
-                    ),
+                    borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
                 ),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Masukkan password' : null,
+                validator: (v) => v == null || v.isEmpty ? 'Masukkan password' : null,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-              // Login Button
               loading
-                  ? CircularProgressIndicator()
+                  ? const CircularProgressIndicator()
                   : SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
                         onPressed: _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF667eea),
+                          backgroundColor: const Color(0xFF667eea),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 4,
                         ),
-                        child: Text(
+                        child: const Text(
                           'Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
 
-              // Error Message
               if (error.isNotEmpty) ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Container(
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(8),
@@ -316,19 +293,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: Colors.red[700],
-                        size: 20,
-                      ),
-                      SizedBox(width: 8),
+                      Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           error,
-                          style: TextStyle(
-                            color: Colors.red[700],
-                            fontSize: 13,
-                          ),
+                          style: TextStyle(color: Colors.red[700], fontSize: 13),
                         ),
                       ),
                     ],
@@ -336,21 +306,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
 
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-              // Register Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Belum punya akun? ',
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
+                  Text('Belum punya akun? ', style: TextStyle(color: Colors.grey[700])),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/register');
                     },
-                    child: Text(
+                    child: const Text(
                       'Daftar',
                       style: TextStyle(
                         color: Color(0xFF667eea),

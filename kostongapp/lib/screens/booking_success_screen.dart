@@ -1,9 +1,6 @@
-// screens/booking_success_screen.dart - SIMPLIFIED VERSION (Tanpa Kontrak)
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Screen yang ditampilkan setelah pembayaran berhasil
-/// Menampilkan konfirmasi booking tanpa fitur cetak kontrak
 class BookingSuccessScreen extends StatefulWidget {
   final Map<String, dynamic> kostData;
   final DateTime startDate;
@@ -30,12 +27,10 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
   @override
   void initState() {
     super.initState();
-    // Generate kode booking unik berdasarkan timestamp
     bookingCode =
         "KST-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}";
   }
 
-  /// Format angka ke format mata uang Rupiah
   String _formatCurrency(int amount) {
     return NumberFormat.currency(
       locale: 'id_ID',
@@ -44,7 +39,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
     ).format(amount);
   }
 
-  /// Safely get string value dari dynamic data
   String _getStringValue(dynamic value, String defaultValue) {
     if (value == null) return defaultValue;
     if (value is String) return value;
@@ -54,21 +48,21 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      // Prevent back button, harus kembali ke home
       onWillPop: () async {
-        Navigator.popUntil(context, (route) => route.isFirst);
+        if (mounted) {
+          Navigator.popUntil(context, (route) => route.isFirst);
+        }
         return false;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView( // Ditambahkan SingleChildScrollView
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Success Animation Icon
                 Container(
                   width: 120,
                   height: 120,
@@ -84,7 +78,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Title Success
                 const Text(
                   'Booking Berhasil!',
                   style: TextStyle(
@@ -96,7 +89,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Description
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -111,7 +103,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Detail Booking Card
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -121,7 +112,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Kode Booking - Highlighted
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -165,7 +155,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
                       const Divider(height: 1),
                       const SizedBox(height: 20),
 
-                      // Detail Booking Information
                       _buildDetailRow(
                         'Nama Kost',
                         _getStringValue(widget.kostData['nama_kost'], 'Kost'),
@@ -207,7 +196,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
 
                 const SizedBox(height: 32),
 
-                // Info Card
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -237,16 +225,16 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
                   ),
                 ),
 
-                const Spacer(),
+                const SizedBox(height: 32), // Spacer
 
-                // Tombol Kembali ke Beranda
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // Kembali ke halaman utama (home screen)
-                      Navigator.popUntil(context, (route) => route.isFirst);
+                      if (mounted) {
+                        Navigator.popUntil(context, (route) => route.isFirst);
+                      }
                     },
                     icon: const Icon(Icons.home, size: 20),
                     label: const Text(
@@ -276,11 +264,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
     );
   }
 
-  /// Widget untuk menampilkan baris detail booking
-  /// [label] = Label di sebelah kiri
-  /// [value] = Nilai di sebelah kanan
-  /// [isBold] = Apakah text bold
-  /// [valueColor] = Warna custom untuk value
   Widget _buildDetailRow(
     String label,
     String value, {

@@ -29,35 +29,46 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
   }
 
   Future<void> _loadRooms() async {
-    setState(() => _loading = true);
+    if (mounted) {
+      setState(() => _loading = true);
+    }
 
     final result = await ApiService.fetchRoomsByKost(
       widget.token,
       widget.kostId,
     );
 
-    if (result['success'] == true) {
-      setState(() {
-        _rooms = result['data'] ?? [];
-        _loading = false;
-      });
-    } else {
-      setState(() => _loading = false);
-      _showSnackBar(result['message'] ?? 'Gagal memuat kamar', isError: true);
+    if (mounted) {
+      if (result['success'] == true) {
+        setState(() {
+          _rooms = result['data'] ?? [];
+          _loading = false;
+        });
+      } else {
+        setState(() => _loading = false);
+        _showSnackBar(result['message'] ?? 'Gagal memuat kamar', isError: true);
+      }
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.red[700] : Colors.green[700],
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
-  Future<void> _deleteRoom(String roomId) async {
+  Future<void> _deleteRoom(String? roomId) async {
+    if (roomId == null) {
+      _showSnackBar('ID Kamar tidak valid', isError: true);
+      return;
+    }
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -80,14 +91,16 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
     if (confirm == true) {
       final result = await ApiService.deleteRoom(widget.token, roomId);
 
-      if (result['success'] == true) {
-        _showSnackBar('Kamar berhasil dihapus');
-        _loadRooms();
-      } else {
-        _showSnackBar(
-          result['message'] ?? 'Gagal menghapus kamar',
-          isError: true,
-        );
+      if (mounted) {
+        if (result['success'] == true) {
+          _showSnackBar('Kamar berhasil dihapus');
+          _loadRooms();
+        } else {
+          _showSnackBar(
+            result['message'] ?? 'Gagal menghapus kamar',
+            isError: true,
+          );
+        }
       }
     }
   }
@@ -175,6 +188,7 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
 
   Widget _buildRoomCard(Map<String, dynamic> room) {
     final isAvailable = room['status']?.toString().toLowerCase() == 'tersedia';
+    final roomId = room['id']?.toString() ?? room['_id']?.toString();
 
     return Card(
       margin: EdgeInsets.only(bottom: 12),
@@ -270,7 +284,7 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
                 SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _deleteRoom(room['id'].toString()),
+                    onPressed: () => _deleteRoom(roomId),
                     icon: Icon(Icons.delete, size: 18),
                     label: Text('Hapus'),
                     style: OutlinedButton.styleFrom(
@@ -341,9 +355,11 @@ class _AddEditRoomDialogState extends State<AddEditRoomDialog> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _loading = true);
+    if (mounted) {
+      setState(() => _loading = true);
+    }
 
     final data = {
       'kost_id': widget.kostId,
@@ -355,34 +371,41 @@ class _AddEditRoomDialogState extends State<AddEditRoomDialog> {
 
     try {
       Map<String, dynamic> result;
+      final roomId = widget.roomData?['id']?.toString() ?? widget.roomData?['_id']?.toString();
 
-      if (widget.roomData != null) {
+      if (roomId != null) {
         result = await ApiService.updateRoom(
           widget.token,
-          widget.roomData!['id'].toString(),
+          roomId,
           data,
         );
       } else {
         result = await ApiService.createRoom(widget.token, data);
       }
 
-      if (result['success'] == true) {
-        Navigator.pop(context);
-        widget.onSuccess();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal menyimpan'),
-            backgroundColor: Colors.red[700],
-          ),
-        );
+      if (mounted) {
+        if (result['success'] == true) {
+          Navigator.pop(context);
+          widget.onSuccess();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Gagal menyimpan'),
+              backgroundColor: Colors.red[700],
+            ),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red[700]),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red[700]),
+        );
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 

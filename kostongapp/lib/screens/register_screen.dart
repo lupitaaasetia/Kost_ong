@@ -34,6 +34,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   DateTime? selectedDate;
 
+  @override
+  void dispose() {
+    namaC.dispose();
+    emailC.dispose();
+    passC.dispose();
+    confirmPassC.dispose();
+    teleponC.dispose();
+    tglLahirC.dispose();
+    jalanC.dispose();
+    kelurahanC.dispose();
+    kecamatanC.dispose();
+    kotaC.dispose();
+    provinsiC.dispose();
+    kodePosC.dispose();
+    super.dispose();
+  }
+
   // Fungsi Helper Date Picker
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -86,6 +103,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'kode_pos': kodePosC.text.trim(),
       },
     );
+
+    if (!mounted) return;
 
     setState(() => loading = false);
 

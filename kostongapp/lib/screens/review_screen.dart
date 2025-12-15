@@ -26,7 +26,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       if (mounted) {
         setState(() {
           // Menggunakan Service untuk mendapatkan data unik berdasarkan ID Kost
-          reviews = ReviewService.getReviewsForKost(widget.kostId);
+          // reviews = ReviewService.getReviewsForKost(widget.kostId);
           _isLoading = false;
         });
       }

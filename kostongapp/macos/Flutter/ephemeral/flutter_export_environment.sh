@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=F:\flutter"
-export "FLUTTER_APPLICATION_PATH=E:\Abid Sunaryo IT PSDKU Magetan\SMT 3\BASIS DATA\Kost_ong\kostongapp"
+export "FLUTTER_ROOT=C:\src\flutter_windows_3.38.5-stable\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\Bagas Abhisyeka\Downloads\KostongWeb-main\KostongWeb-main\kostongapp"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"

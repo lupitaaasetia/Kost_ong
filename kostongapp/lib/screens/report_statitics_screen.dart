@@ -5,7 +5,7 @@ class ReportsStatisticsScreen extends StatefulWidget {
   final String token;
 
   const ReportsStatisticsScreen({Key? key, required this.token})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<ReportsStatisticsScreen> createState() =>
@@ -37,6 +37,8 @@ class _ReportsStatisticsScreenState extends State<ReportsStatisticsScreen> {
       _selectedPeriod,
     );
 
+    if (!mounted) return;
+
     if (result['success'] == true) {
       setState(() {
         _statistics = result['data'] ?? {};
@@ -52,6 +54,7 @@ class _ReportsStatisticsScreenState extends State<ReportsStatisticsScreen> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -432,8 +435,9 @@ class _ReportsStatisticsScreenState extends State<ReportsStatisticsScreen> {
 
   Widget _buildOccupancyRate() {
     final activeRooms = _statistics['active_rooms'] ?? 0;
-    final totalRooms = _statistics['total_rooms'] ?? 1;
-    final occupancyRate = (activeRooms / totalRooms) * 100;
+    final totalRooms = _statistics['total_rooms'] ?? 0;
+    final occupancyRate =
+        totalRooms > 0 ? (activeRooms / totalRooms) * 100 : 0.0;
 
     return Container(
       padding: EdgeInsets.all(20),
@@ -498,11 +502,18 @@ class _ReportsStatisticsScreenState extends State<ReportsStatisticsScreen> {
   }
 
   String _formatCurrency(dynamic amount) {
-    final value = amount is String ? int.tryParse(amount) ?? 0 : amount as int;
-    return value.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    );
+    num value;
+    if (amount is num) {
+      value = amount;
+    } else if (amount is String) {
+      value = num.tryParse(amount) ?? 0;
+    } else {
+      value = 0;
+    }
+    return value.toInt().toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
   }
 }
 
@@ -531,17 +542,19 @@ class LineChartPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final maxValue = data
-        .map((e) => e['value'] as num)
+        .map((e) => (e['value'] ?? 0) as num)
         .reduce((a, b) => a > b ? a : b)
         .toDouble();
-    final stepX = size.width / (data.length - 1);
+    final stepX = data.length > 1 ? size.width / (data.length - 1) : 0.0;
 
     final path = Path();
     final fillPath = Path();
 
     for (int i = 0; i < data.length; i++) {
       final x = i * stepX;
-      final y = size.height - (data[i]['value'] / maxValue * size.height);
+      final num value = (data[i]['value'] ?? 0) as num;
+      final y =
+          size.height - (maxValue > 0 ? (value / maxValue * size.height) : 0);
 
       if (i == 0) {
         path.moveTo(x, y);

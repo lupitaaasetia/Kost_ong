@@ -8,7 +8,7 @@ import 'manage_bookings_screen.dart';
 import 'report_statitics_screen.dart';
 import '../services/chat_services.dart'; // Digunakan untuk update unread count
 import 'chat_detail_screen.dart';
-// Note: OwnerBookingRequestsScreen, BookingService, NotificationService diasumsikan ada/didefinisikan di luar file ini jika dibutuhkan.
+import '../models/chat_model.dart';
 
 class OwnerHomeScreen extends StatefulWidget {
   @override
@@ -93,17 +93,19 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
   void _updateUnreadChatCount() {
     if (userId == null) return;
-    // Asumsi ChatService.getUnreadMessageCount sudah ada
-    final count = ChatService.getUnreadMessageCount(userId!);
-    if (mounted && count != _unreadChatCount) {
-      setState(() {
-        _unreadChatCount = count;
-      });
+    try {
+      final count = ChatService.getUnreadMessageCount(userId!);
+      if (mounted && count != _unreadChatCount) {
+        setState(() {
+          _unreadChatCount = count;
+        });
+      }
+    } catch (e) {
+      // ChatService not available or failed
     }
   }
 
   Future<void> _loadAll({bool showLoading = true}) async {
-    // ... (Fungsi _loadAll sama seperti sebelumnya)
     if (showLoading) {
       if (mounted) setState(() => loading = true);
       _animController.forward(from: 0);
@@ -125,15 +127,15 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
     _updateUnreadChatCount();
 
-    // Pastikan ApiService.fetchXxx mengembalikan Map<String, dynamic>
     final futures = await Future.wait([
       ApiService.fetchKost(token),
       ApiService.fetchBooking(token),
       ApiService.fetchPembayaran(token),
       ApiService.fetchReview(token),
+      ApiService.fetchUserProfile(token!), // Fetch user profile
     ]);
 
-    final keys = ['kost', 'booking', 'pembayaran', 'review'];
+    final keys = ['kost', 'booking', 'pembayaran', 'review', 'user'];
     final tmp = <String, dynamic>{};
 
     for (int i = 0; i < keys.length; i++) {
@@ -149,24 +151,27 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
       setState(() {
         dataAll = tmp;
         loading = false;
-        // Update user data jika ada di respons API (optional)
-        if (dataAll.containsKey('user')) {
-          userName = dataAll['user']['nama_lengkap'] ?? userName;
-          userEmail = dataAll['user']['email'] ?? userEmail;
+        // [FIX] Update user data from profile fetch
+        if (dataAll.containsKey('user') && dataAll['user'] is Map) {
+          final userData = dataAll['user'] as Map<String, dynamic>;
+          userName = userData['nama_lengkap'] ?? userName;
+          userEmail = userData['email'] ?? userEmail;
+          userId = userData['_id']?.toString() ?? userId;
         }
       });
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.red[700] : Colors.green[700],
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _logout() {
@@ -199,6 +204,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
   // --- NAVIGATION HELPERS ---
   void _navigateToAddKost() async {
+    if (token == null) return;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => AddEditKostScreen(token: token!)),
@@ -207,6 +213,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   void _navigateToEditKost(Map<String, dynamic> kost) async {
+    if (token == null) return;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -217,6 +224,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   void _navigateToManageRooms(Map<String, dynamic> kost) {
+    if (token == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -230,25 +238,17 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   void _navigateToManageBookings() {
+    if (token == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ManageBookingsScreen(token: token!),
       ),
-    );
-  }
-
-  // Fungsi navigasi yang ditambahkan dari kode profil user
-  void _navigateToBookingRequests() {
-    // Diasumsikan ada OwnerBookingRequestsScreen
-    Navigator.pushNamed(
-      context,
-      '/owner/booking_requests',
-      arguments: {'token': token},
-    ).then((_) => _loadAll(showLoading: false));
+    ).then((_) => _loadAll(showLoading: false)); // Refresh setelah kembali
   }
 
   void _navigateToReportsStatistics() {
+    if (token == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -258,6 +258,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   void _navigateToManageReviews() {
+    if (token == null) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -266,7 +267,12 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     );
   }
 
-  Future<void> _deleteKost(String kostId) async {
+  Future<void> _deleteKost(String? kostId) async {
+    if (kostId == null || kostId.isEmpty) {
+      _showSnackBar('ID Kost tidak valid.', isError: true);
+      return;
+    }
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -398,7 +404,6 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   // --- HALAMAN KOST (GRID BARU) ---
   Widget _buildKostPage() {
     final kostList = dataAll['kost'] is List ? dataAll['kost'] as List : [];
-    // ... (Implementasi Grid Kost yang sudah diperbaiki dari respons sebelumnya)
     return Column(
       children: [
         Padding(
@@ -460,7 +465,6 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
       imageUrl = (kost['foto_kost'] as List)[0];
     }
 
-    // [FIX ERROR MERAH] Parsing Alamat dengan Aman
     String lokasiDisplay = '-';
     final rawAlamat = kost['alamat'];
 
@@ -476,6 +480,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     double rating = double.tryParse(kost['rating']?.toString() ?? '0') ?? 0.0;
     int harga = int.tryParse(kost['harga']?.toString() ?? '0') ?? 0;
     String namaKost = kost['nama_kost'] ?? 'Tanpa Nama';
+    String? kostId = kost['id']?.toString() ?? kost['_id']?.toString();
 
     return GestureDetector(
       onTap: () => _navigateToManageRooms(kost),
@@ -532,12 +537,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
                         ),
                         onSelected: (value) {
                           if (value == 'edit') _navigateToEditKost(kost);
-                          if (value == 'delete')
-                            _deleteKost(
-                              kost['id']?.toString() ??
-                                  kost['_id']?.toString() ??
-                                  '',
-                            );
+                          if (value == 'delete') _deleteKost(kostId);
                         },
                         itemBuilder: (context) => [
                           PopupMenuItem(value: 'edit', child: Text('Edit')),
@@ -812,7 +812,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
   Widget _buildBookingPage() {
     final bookingList = dataAll['booking'] is List
-        ? dataAll['booking'] as List
+        ? (dataAll['booking'] as List)
         : [];
     if (bookingList.isEmpty) return Center(child: Text("Belum ada booking"));
     return ListView.builder(
@@ -826,8 +826,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
               backgroundColor: Colors.blue[50],
               child: Icon(Icons.person, color: Colors.blue),
             ),
-            title: Text(b['nama_pemesan'] ?? 'User'),
-            subtitle: Text(b['status'] ?? 'Pending'),
+            title: Text(b['user_id']?['nama_lengkap']?.toString() ?? 'User'),
             trailing: Icon(Icons.chevron_right),
             onTap: _navigateToManageBookings,
           ),
@@ -839,63 +838,69 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   Widget _buildChatPage() {
     if (userId == null)
       return Center(child: Text("ID Pengguna tidak tersedia."));
-    // Asumsi ChatService.getChatRoomsForUser sudah ada
-    final chatRooms = ChatService.getChatRoomsForUser(userId!);
-    if (chatRooms.isEmpty) return Center(child: Text("Belum ada pesan"));
-    return ListView.builder(
-      itemCount: chatRooms.length,
-      itemBuilder: (context, index) {
-        final room = chatRooms[index];
-        return ListTile(
-          leading: CircleAvatar(child: Text(room.seekerName[0])),
-          title: Text(room.seekerName),
-          subtitle: Text(room.lastMessage?.message ?? ''),
-          trailing: room.unreadCount > 0
-              ? Container(
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+    
+    try {
+      final chatRooms = ChatService.getChatRoomsForUser(userId!);
+      if (chatRooms.isEmpty) return Center(child: Text("Belum ada pesan"));
+      return ListView.builder(
+        itemCount: chatRooms.length,
+        itemBuilder: (context, index) {
+          final room = chatRooms[index];
+          return ListTile(
+            leading: CircleAvatar(child: Text(room.seekerName[0])),
+            title: Text(room.seekerName),
+            subtitle: Text(room.lastMessage?.message ?? ''),
+            trailing: room.unreadCount > 0
+                ? Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${room.unreadCount}',
+                      style: TextStyle(fontSize: 10, color: Colors.white),
+                    ),
+                  )
+                : null,
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChatDetailScreen(
+                    chatRoom: room,
+                    currentUserId: userId!,
+                    currentUserName: userName ?? 'Owner',
                   ),
-                  child: Text(
-                    '${room.unreadCount}',
-                    style: TextStyle(fontSize: 10, color: Colors.white),
-                  ),
-                )
-              : null,
-          onTap: () async {
-            // Asumsi ChatDetailScreen ada
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatDetailScreen(
-                  chatRoom: room,
-                  currentUserId: userId!,
-                  currentUserName: userName ?? 'Owner',
                 ),
-              ),
-            );
-            _updateUnreadChatCount();
-          },
-        );
-      },
-    );
+              );
+              _updateUnreadChatCount();
+            },
+          );
+        },
+      );
+    } catch (e) {
+      return Center(child: Text("Layanan chat tidak tersedia saat ini."));
+    }
   }
 
   // --- HALAMAN PROFIL (FIXED & EXTENDED) ---
   Widget _buildProfilePage() {
     final bookingList = dataAll['booking'] is List
-        ? dataAll['booking'] as List
+        ? (dataAll['booking'] as List)
         : [];
     final totalBookings = bookingList.length;
     final pendingBookings = bookingList
-        .where((b) => b['status']?.toString().toLowerCase() == 'pending')
+        .where((b) => b['status_booking']?.toString().toLowerCase() == 'pending')
         .length;
+    
+    // ✅ PERBAIKAN: Hitung 'active' sebagai disetujui
     final confirmedBookings = bookingList
         .where(
-          (b) =>
-              b['status']?.toString().toLowerCase() == 'confirmed' ||
-              b['status']?.toString().toLowerCase() == 'disetujui',
+          (b) {
+            final status = b['status_booking']?.toString().toLowerCase();
+            return status == 'active' || status == 'confirmed' || status == 'dikonfirmasi';
+          }
         )
         .length;
     final currentEmail = userEmail ?? 'email@contoh.com';
@@ -1033,7 +1038,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
                   subtitle: 'Kelola permintaan booking masuk',
                   color: _profileColor,
                   badge: pendingBookings > 0 ? pendingBookings : null,
-                  onTap: _navigateToBookingRequests,
+                  onTap: _navigateToManageBookings, // ✅ PERBAIKAN: Arahkan ke ManageBookingsScreen
                 ),
                 // Kost Saya
                 _buildMenuCard(
@@ -1054,13 +1059,11 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
                 ),
                 // Pembayaran
                 _buildMenuCard(
-                  icon: Icons.payment, // Icons.pembayaran diganti Icons.payment
+                  icon: Icons.payment,
                   title: 'Pembayaran',
                   subtitle: 'Riwayat pembayaran',
                   color: Colors.amber,
-                  onTap: () => _showSnackBar(
-                    'Fitur Pembayaran - Navigasi ke Manage Payments',
-                  ),
+                  onTap: _navigateToManageBookings, // ✅ PERBAIKAN: Arahkan ke ManageBookingsScreen sementara
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -1109,11 +1112,11 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
                     icon: const Icon(Icons.logout),
                     label: const Text('Keluar'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red, // warna latar belakang
-                      foregroundColor: Colors.white, // warna latar depan
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12), // radius batas
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -1210,7 +1213,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
               Expanded(
                 child: Column(
                   crossAxisAlignment:
-                      CrossAxisAlignment.start, // penyelarasan sumbu silang
+                      CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,

@@ -404,50 +404,8 @@ class ApiService {
   static Future<Map<String, dynamic>> fetchStatistics(
     String token,
     String period,
-  ) async {
-    // Mock data untuk testing - ganti dengan endpoint asli
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    return {
-      'success': true,
-      'data': {
-        'total_revenue': 15000000,
-        'growth_rate': 12.5,
-        'total_bookings': 25,
-        'confirmed_bookings': 18,
-        'active_rooms': 15,
-        'total_rooms': 20,
-        'chart_data': [
-          {'label': 'Sen', 'value': 1200000},
-          {'label': 'Sel', 'value': 1500000},
-          {'label': 'Rab', 'value': 1800000},
-          {'label': 'Kam', 'value': 1600000},
-          {'label': 'Jum', 'value': 2100000},
-          {'label': 'Sab', 'value': 2500000},
-          {'label': 'Min', 'value': 2300000},
-        ],
-        'recent_payments': [
-          {
-            'id': '1',
-            'nama_penyewa': 'Budi Santoso',
-            'jumlah': 1500000,
-            'tanggal': '10 Des 2024',
-          },
-          {
-            'id': '2',
-            'nama_penyewa': 'Ani Wijaya',
-            'jumlah': 2000000,
-            'tanggal': '9 Des 2024',
-          },
-          {
-            'id': '3',
-            'nama_penyewa': 'Citra Dewi',
-            'jumlah': 1800000,
-            'tanggal': '8 Des 2024',
-          },
-        ],
-      },
-    };
+  ) {
+    return _getJson('/statistics?period=$period', token);
   }
 
   // =====================

@@ -1,7 +1,6 @@
-// screens/chat_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../models/chat.dart';
+import '../models/chat_model.dart';
 import '../services/chat_services.dart';
 import 'package:intl/intl.dart';
 
@@ -33,13 +32,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _loadMessages();
     ChatService.markAsRead(widget.chatRoom.id, widget.currentUserId);
 
-    // Listen to new messages
     _messageSubscription = ChatService.messageStream.listen((message) {
-      if (message.receiverId == widget.currentUserId ||
-          message.senderId == widget.currentUserId) {
-        _loadMessages();
-        ChatService.markAsRead(widget.chatRoom.id, widget.currentUserId);
-        _scrollToBottom();
+      if (message.roomId == widget.chatRoom.id) {
+        if (mounted) {
+          _loadMessages();
+          ChatService.markAsRead(widget.chatRoom.id, widget.currentUserId);
+          _scrollToBottom();
+        }
       }
     });
   }
@@ -53,23 +52,23 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _loadMessages() {
-    setState(() {
-      _messages = ChatService.getMessages(widget.chatRoom.id);
-    });
+    if (mounted) {
+      setState(() {
+        _messages = ChatService.getMessages(widget.chatRoom.id);
+      });
+    }
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _sendMessage() async {
@@ -214,15 +213,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              // Show more options
-            },
+            onPressed: () {},
           ),
         ],
       ),
       body: Column(
         children: [
-          // Messages list
           Expanded(
             child: _messages.isEmpty
                 ? Center(
@@ -297,8 +293,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     },
                   ),
           ),
-
-          // Message input
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
