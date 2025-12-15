@@ -29,14 +29,13 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
   }
 
   Future<void> _loadRooms() async {
-    if (mounted) {
-      setState(() => _loading = true);
-    }
+    if (mounted) setState(() => _loading = true);
 
-    final result = await ApiService.fetchRoomsByKost(
-      widget.token,
-      widget.kostId,
-    );
+    print("Fetching rooms for kostId: ${widget.kostId}"); // DEBUG LOG
+
+    final result = await ApiService.fetchRoomsByKost(widget.token, widget.kostId);
+
+    print("Fetch Rooms Result: $result"); // DEBUG LOG
 
     if (mounted) {
       if (result['success'] == true) {
@@ -96,10 +95,7 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
           _showSnackBar('Kamar berhasil dihapus');
           _loadRooms();
         } else {
-          _showSnackBar(
-            result['message'] ?? 'Gagal menghapus kamar',
-            isError: true,
-          );
+          _showSnackBar(result['message'] ?? 'Gagal menghapus kamar', isError: true);
         }
       }
     }
@@ -188,7 +184,7 @@ class _ManageRoomsScreenState extends State<ManageRoomsScreen> {
 
   Widget _buildRoomCard(Map<String, dynamic> room) {
     final isAvailable = room['status']?.toString().toLowerCase() == 'tersedia';
-    final roomId = room['id']?.toString() ?? room['_id']?.toString();
+    final roomId = room['_id']?.toString();
 
     return Card(
       margin: EdgeInsets.only(bottom: 12),
@@ -357,28 +353,22 @@ class _AddEditRoomDialogState extends State<AddEditRoomDialog> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    if (mounted) {
-      setState(() => _loading = true);
-    }
+    if (mounted) setState(() => _loading = true);
 
     final data = {
       'kost_id': widget.kostId,
       'nomor_kamar': _nomorKamarController.text,
-      'harga': _hargaController.text,
+      'harga': int.tryParse(_hargaController.text) ?? 0,
       'deskripsi': _deskripsiController.text,
       'status': _selectedStatus,
     };
 
     try {
       Map<String, dynamic> result;
-      final roomId = widget.roomData?['id']?.toString() ?? widget.roomData?['_id']?.toString();
+      final roomId = widget.roomData?['_id']?.toString();
 
       if (roomId != null) {
-        result = await ApiService.updateRoom(
-          widget.token,
-          roomId,
-          data,
-        );
+        result = await ApiService.updateRoom(widget.token, roomId, data);
       } else {
         result = await ApiService.createRoom(widget.token, data);
       }
@@ -403,9 +393,7 @@ class _AddEditRoomDialogState extends State<AddEditRoomDialog> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 

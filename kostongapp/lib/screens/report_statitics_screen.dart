@@ -1,27 +1,19 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class ReportsStatisticsScreen extends StatefulWidget {
   final String token;
 
-  const ReportsStatisticsScreen({Key? key, required this.token})
-      : super(key: key);
+  const ReportsStatisticsScreen({Key? key, required this.token}) : super(key: key);
 
   @override
-  State<ReportsStatisticsScreen> createState() =>
-      _ReportsStatisticsScreenState();
+  State<ReportsStatisticsScreen> createState() => _ReportsStatisticsScreenState();
 }
 
 class _ReportsStatisticsScreenState extends State<ReportsStatisticsScreen> {
   bool _loading = true;
-  Map<String, dynamic> _statistics = {};
-  String _selectedPeriod = 'Bulan Ini';
-  final List<String> _periods = [
-    'Hari Ini',
-    'Minggu Ini',
-    'Bulan Ini',
-    'Tahun Ini',
-  ];
+  Map<String, dynamic>? _stats;
 
   @override
   void initState() {
@@ -30,549 +22,240 @@ class _ReportsStatisticsScreenState extends State<ReportsStatisticsScreen> {
   }
 
   Future<void> _loadStatistics() async {
-    setState(() => _loading = true);
+    if (mounted) setState(() => _loading = true);
 
-    final result = await ApiService.fetchStatistics(
-      widget.token,
-      _selectedPeriod,
-    );
+    // ✅ PERBAIKAN: Memanggil dengan argumen yang benar
+    final result = await ApiService.fetchStatistics(widget.token);
 
-    if (!mounted) return;
-
-    if (result['success'] == true) {
-      setState(() {
-        _statistics = result['data'] ?? {};
-        _loading = false;
-      });
-    } else {
-      setState(() => _loading = false);
-      _showSnackBar(
-        result['message'] ?? 'Gagal memuat statistik',
-        isError: true,
-      );
+    if (mounted) {
+      if (result['success'] == true) {
+        setState(() {
+          _stats = result['data'];
+          _loading = false;
+        });
+      } else {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal memuat statistik'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(
-          'Laporan & Statistik',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text('Laporan & Statistik'),
         backgroundColor: Colors.white,
         foregroundColor: Color(0xFF667eea),
-        elevation: 0,
+        elevation: 1,
       ),
       body: _loading
           ? Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadStatistics,
-              child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPeriodSelector(),
-                    SizedBox(height: 24),
-                    _buildRevenueCard(),
-                    SizedBox(height: 16),
-                    _buildStatisticsGrid(),
-                    SizedBox(height: 24),
-                    Text(
-                      'Grafik Pendapatan',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    _buildRevenueChart(),
-                    SizedBox(height: 24),
-                    Text(
-                      'Pembayaran Terbaru',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    _buildRecentPayments(),
-                    SizedBox(height: 24),
-                    _buildOccupancyRate(),
-                  ],
+          : _stats == null
+              ? Center(child: Text('Tidak ada data statistik.'))
+              : RefreshIndicator(
+                  onRefresh: _loadStatistics,
+                  child: ListView(
+                    padding: EdgeInsets.all(16),
+                    children: [
+                      _buildSummaryGrid(),
+                      SizedBox(height: 24),
+                      _buildMonthlyIncomeChart(),
+                      SizedBox(height: 24),
+                      _buildBookingStatusChart(),
+                    ],
+                  ),
                 ),
-              ),
-            ),
     );
   }
 
-  Widget _buildPeriodSelector() {
-    return Container(
-      height: 45,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _periods.length,
-        itemBuilder: (context, index) {
-          final period = _periods[index];
-          final isSelected = _selectedPeriod == period;
-          return Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(period),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() => _selectedPeriod = period);
-                  _loadStatistics();
-                }
-              },
-              selectedColor: Color(0xFF667eea),
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[700],
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              backgroundColor: Colors.white,
-              elevation: isSelected ? 2 : 0,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRevenueCard() {
-    final totalRevenue = _statistics['total_revenue'] ?? 0;
-    final growthRate = _statistics['growth_rate'] ?? 0.0;
-    final isPositive = growthRate >= 0;
-
-    return Container(
-      padding: EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF667eea).withOpacity(0.3),
-            blurRadius: 12,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total Pendapatan',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isPositive ? Icons.trending_up : Icons.trending_down,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '${growthRate.toStringAsFixed(1)}%',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Rp ${_formatCurrency(totalRevenue)}',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Periode: $_selectedPeriod',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatisticsGrid() {
-    final totalBookings = _statistics['total_bookings'] ?? 0;
-    final confirmedBookings = _statistics['confirmed_bookings'] ?? 0;
-    final activeRooms = _statistics['active_rooms'] ?? 0;
-    final totalRooms = _statistics['total_rooms'] ?? 0;
-
-    return Column(
+  Widget _buildSummaryGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.5,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total Booking',
-                totalBookings.toString(),
-                Icons.event_note,
-                Color(0xFF4facfe),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'Dikonfirmasi',
-                confirmedBookings.toString(),
-                Icons.check_circle,
-                Color(0xFF43e97b),
-              ),
-            ),
-          ],
+        _buildStatCard(
+          'Total Pendapatan',
+          'Rp ${(_stats!['total_pendapatan'] ?? 0)}',
+          Icons.monetization_on,
+          Colors.green,
         ),
-        SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Kamar Terisi',
-                '$activeRooms/$totalRooms',
-                Icons.meeting_room,
-                Color(0xFFf093fb),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'Tingkat Hunian',
-                '${totalRooms > 0 ? ((activeRooms / totalRooms) * 100).toStringAsFixed(0) : 0}%',
-                Icons.analytics,
-                Color(0xFFfeca57),
-              ),
-            ),
-          ],
+        _buildStatCard(
+          'Total Booking',
+          '${_stats!['total_booking'] ?? 0}',
+          Icons.event_note,
+          Colors.blue,
+        ),
+        _buildStatCard(
+          'Okupansi',
+          '${_stats!['okupansi'] ?? 0}%',
+          Icons.hotel,
+          Colors.orange,
+        ),
+        _buildStatCard(
+          'Rating Rata-rata',
+          '${_stats!['rating_rata_rata'] ?? 0}',
+          Icons.star,
+          Colors.amber,
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icon, size: 28, color: color),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              ],
             ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          SizedBox(height: 12),
-          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-          SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.grey[800],
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRevenueChart() {
-    final chartData = _statistics['chart_data'] as List? ?? [];
-
-    return Container(
-      height: 200,
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: chartData.isEmpty
-          ? Center(
-              child: Text(
-                'Tidak ada data grafik',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            )
-          : CustomPaint(
-              painter: LineChartPainter(chartData),
-              child: Container(),
-            ),
-    );
-  }
-
-  Widget _buildRecentPayments() {
-    final payments = _statistics['recent_payments'] as List? ?? [];
-
-    if (payments.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          ],
         ),
-        child: Center(
-          child: Text(
-            'Belum ada pembayaran',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: payments.length > 5 ? 5 : payments.length,
-        separatorBuilder: (context, index) => Divider(height: 1),
-        itemBuilder: (context, index) {
-          final payment = payments[index];
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.green.withOpacity(0.1),
-              child: Icon(Icons.payment, color: Colors.green, size: 20),
-            ),
-            title: Text(
-              payment['nama_penyewa']?.toString() ?? 'Penyewa',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              payment['tanggal']?.toString() ?? '-',
-              style: TextStyle(fontSize: 12),
-            ),
-            trailing: Text(
-              'Rp ${_formatCurrency(payment['jumlah'] ?? 0)}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-          );
-        },
       ),
     );
   }
 
-  Widget _buildOccupancyRate() {
-    final activeRooms = _statistics['active_rooms'] ?? 0;
-    final totalRooms = _statistics['total_rooms'] ?? 0;
-    final occupancyRate =
-        totalRooms > 0 ? (activeRooms / totalRooms) * 100 : 0.0;
+  Widget _buildMonthlyIncomeChart() {
+    final List<double> monthlyIncome = List<double>.from(
+      (_stats!['pendapatan_bulanan'] as List<dynamic>?)?.map((e) => (e as num).toDouble()) ?? []
+    );
 
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tingkat Hunian',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '${occupancyRate.toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF667eea),
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pendapatan Bulanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  barGroups: monthlyIncome.asMap().entries.map((entry) {
+                    return BarChartGroupData(
+                      x: entry.key,
+                      barRods: [
+                        BarChartRodData(
+                          toY: entry.value,
+                          color: Colors.blue,
+                          width: 16,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) => Text('Bln ${value.toInt() + 1}'),
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  gridData: FlGridData(show: true, drawVerticalLine: false),
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: occupancyRate / 100,
-              minHeight: 12,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF667eea)),
             ),
-          ),
-          SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Kamar Terisi: $activeRooms',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-              ),
-              Text(
-                'Total Kamar: $totalRooms',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  String _formatCurrency(dynamic amount) {
-    num value;
-    if (amount is num) {
-      value = amount;
-    } else if (amount is String) {
-      value = num.tryParse(amount) ?? 0;
-    } else {
-      value = 0;
-    }
-    return value.toInt().toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        );
+  Widget _buildBookingStatusChart() {
+    final Map<String, int> bookingStatus = Map<String, int>.from(
+      (_stats!['booking_status'] as Map<dynamic, dynamic>?)?.map((k, v) => MapEntry(k.toString(), (v as num).toInt())) ?? {}
+    );
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Status Booking', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: bookingStatus.entries.map((entry) {
+                    Color color;
+                    switch (entry.key) {
+                      case 'pending': color = Colors.orange; break;
+                      case 'active': color = Colors.green; break;
+                      case 'cancelled': color = Colors.red; break;
+                      default: color = Colors.grey;
+                    }
+                    return PieChartSectionData(
+                      color: color,
+                      value: entry.value.toDouble(),
+                      title: '${entry.value}',
+                      radius: 80,
+                      titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    );
+                  }).toList(),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 40,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: bookingStatus.entries.map((entry) {
+                Color color;
+                switch (entry.key) {
+                  case 'pending': color = Colors.orange; break;
+                  case 'active': color = Colors.green; break;
+                  case 'cancelled': color = Colors.red; break;
+                  default: color = Colors.grey;
+                }
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    children: [
+                      Container(width: 16, height: 16, color: color),
+                      SizedBox(width: 4),
+                      Text(entry.key.toUpperCase()),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-}
-
-class LineChartPainter extends CustomPainter {
-  final List<dynamic> data;
-
-  LineChartPainter(this.data);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
-
-    final paint = Paint()
-      ..color = Color(0xFF667eea)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF667eea).withOpacity(0.3),
-          Color(0xFF667eea).withOpacity(0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final maxValue = data
-        .map((e) => (e['value'] ?? 0) as num)
-        .reduce((a, b) => a > b ? a : b)
-        .toDouble();
-    final stepX = data.length > 1 ? size.width / (data.length - 1) : 0.0;
-
-    final path = Path();
-    final fillPath = Path();
-
-    for (int i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final num value = (data[i]['value'] ?? 0) as num;
-      final y =
-          size.height - (maxValue > 0 ? (value / maxValue * size.height) : 0);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-        fillPath.moveTo(x, size.height);
-        fillPath.lineTo(x, y);
-      } else {
-        path.lineTo(x, y);
-        fillPath.lineTo(x, y);
-      }
-    }
-
-    fillPath.lineTo(size.width, size.height);
-    fillPath.close();
-
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

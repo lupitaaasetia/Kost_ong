@@ -210,9 +210,13 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
   void _openChat(dynamic kost) {
     if (token == null) return;
     final kostId = kost['_id']?.toString() ?? kost['id']?.toString() ?? '';
-    final kostName = kost['nama_kost']?.toString() ?? 'Kost';
-    final ownerId = kost['pemilik_id']?.toString() ?? '0';
-    final ownerName = kost['pemilik_nama']?.toString() ?? 'Pemilik Kost';
+    final kostName = kost['nama_kost']?.toString() ?? kost['title']?.toString() ?? 'Kost';
+    
+    // ✅ DEBUG: Cek Owner ID
+    final ownerId = kost['pemilik_id']?.toString() ?? kost['owner']?.toString() ?? '0';
+    print("DEBUG CHAT: Kost ID: $kostId, Owner ID: $ownerId");
+
+    final ownerName = 'Pemilik Kost';
     final userId = userData?['_id']?.toString() ?? userData?['id']?.toString();
 
     if (kostId.isEmpty || userId == null) {
@@ -292,8 +296,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
           userData = dataAll['user'] as Map<String, dynamic>;
           userName = userData?['nama_lengkap'] ?? userName;
         }
-        // ✅ PERBAIKAN: Jangan reset _localFavorites di sini
-        // _localFavorites = dataAll['favorit'] is List ? List.from(dataAll['favorit']) : [];
+        _localFavorites = dataAll['favorit'] is List ? List.from(dataAll['favorit']) : [];
         loading = false;
       });
     }
@@ -665,10 +668,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                     child: Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey[200], 
-                        child: const Center(child: Icon(Icons.home_work, color: Colors.grey, size: 40))
-                      ),
+                      errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[200], child: const Icon(Icons.broken_image, color: Colors.grey)),
                     ),
                   ),
                   if (hasDistance)
@@ -725,6 +725,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(namaKost, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
@@ -742,10 +743,12 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                         Text(rating.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
+                    const SizedBox(height: 8),
                     Text(
                       harga > 0 ? _formatCurrency(harga) : 'Hubungi Pemilik',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF4facfe)),
                     ),
+                    const SizedBox(height: 4),
                     Text(deskripsi, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[400], fontSize: 11)),
                   ],
                 ),
@@ -1075,8 +1078,7 @@ class _SeekerHomeScreenState extends State<SeekerHomeScreen> {
                                     SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text("Pemilik Kost", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                                           SizedBox(height: 4),

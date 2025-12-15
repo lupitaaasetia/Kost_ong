@@ -11,16 +11,33 @@ const fixDatabase = async () => {
     const db = mongoose.connection.db;
 
     // Hapus validasi schema dari koleksi 'booking'
-    await db.command({
-      collMod: 'booking',
-      validator: {},
-      validationLevel: 'off'
-    });
+    try {
+      await db.command({
+        collMod: 'booking',
+        validator: {},
+        validationLevel: 'off'
+      });
+      console.log('✅ Validasi koleksi "booking" berhasil dihapus!');
+    } catch (e) {
+      console.warn('⚠️ Gagal menghapus validasi "booking" (mungkin tidak ada). Melanjutkan...');
+    }
 
-    console.log('✅ Validasi koleksi booking berhasil dihapus!');
+    // Hapus validasi schema dari koleksi 'kost'
+    try {
+      await db.command({
+        collMod: 'kost',
+        validator: {},
+        validationLevel: 'off'
+      });
+      console.log('✅ Validasi koleksi "kost" berhasil dihapus!');
+    } catch (e) {
+      console.warn('⚠️ Gagal menghapus validasi "kost" (mungkin tidak ada). Melanjutkan...');
+    }
+
+    console.log('Proses selesai.');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Gagal:', err);
+    console.error('❌ Gagal terhubung atau menjalankan perintah:', err);
     process.exit(1);
   }
 };

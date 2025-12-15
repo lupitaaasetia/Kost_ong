@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 import 'pembayaran_screen.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -17,41 +19,58 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime? _checkInDate;
   DateTime? _checkOutDate;
   int _duration = 1;
-  String? _selectedRoom;
+  String? _selectedRoomId;
+  String? _selectedRoomNumber;
   final TextEditingController _notesController = TextEditingController();
 
-  final List<Map<String, dynamic>> _availableRooms = [
-    {
-      'number': 'A1',
-      'floor': 'Lantai 1',
-      'size': 12,
-      'bedType': 'Single Bed',
-      'hasWindow': true,
-      'available': true,
-    },
-    {
-      'number': 'A2',
-      'floor': 'Lantai 1',
-      'size': 15,
-      'bedType': 'Queen Bed',
-      'hasWindow': true,
-      'available': true,
-    },
-    {
-      'number': 'B1',
-      'floor': 'Lantai 2',
-      'size': 10,
-      'bedType': 'Single Bed',
-      'hasWindow': false,
-      'available': true,
-    },
-  ];
+  bool _loadingRooms = true;
+  List<dynamic> _availableRooms = [];
 
   @override
   void initState() {
     super.initState();
     _checkInDate = DateTime.now().add(const Duration(days: 7));
     _checkOutDate = _checkInDate!.add(Duration(days: 30 * _duration));
+    _loadRooms();
+  }
+
+  Future<void> _loadRooms() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      if (token == null) {
+        setState(() => _loadingRooms = false);
+        return;
+      }
+
+      final kostId = widget.kostData['_id']?.toString() ?? widget.kostData['id']?.toString();
+      if (kostId == null) {
+        setState(() => _loadingRooms = false);
+        return;
+      }
+
+      final result = await ApiService.fetchRoomsByKost(token, kostId);
+
+      if (mounted) {
+        if (result['success'] == true) {
+          final allRooms = result['data'] ?? [];
+          // ✅ PERBAIKAN: Filter hanya kamar yang 'Tersedia'
+          setState(() {
+            _availableRooms = allRooms.where((room) {
+              final status = room['status']?.toString().toLowerCase() ?? '';
+              return status == 'tersedia';
+            }).toList();
+            _loadingRooms = false;
+          });
+        } else {
+          setState(() => _loadingRooms = false);
+          _showSnackBar('Gagal memuat daftar kamar', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loadingRooms = false);
+    }
   }
 
   @override
@@ -96,7 +115,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   void _proceedToPayment() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedRoom == null) {
+      if (_selectedRoomId == null) {
         _showSnackBar('Silakan pilih kamar terlebih dahulu', isError: true);
         return;
       }
@@ -114,11 +133,14 @@ class _BookingScreenState extends State<BookingScreen> {
             widget.kostData['_id']?.toString() ??
             widget.kostData['id']?.toString() ??
             '',
+        'kamar_id': _selectedRoomId,
         'nama_kost': widget.kostData['nama_kost']?.toString() ?? 'Nama Kost',
-        'alamat': widget.kostData['alamat']?.toString() ?? 'Alamat',
-        'tipe_kamar': widget.kostData['tipe_kamar']?.toString() ?? 'Standard',
+        'alamat': widget.kostData['alamat'] is Map 
+            ? (widget.kostData['alamat']['jalan'] ?? '') 
+            : (widget.kostData['alamat']?.toString() ?? 'Alamat'),
+        'tipe_kamar': widget.kostData['tipe_kost']?.toString() ?? 'Standard',
         'harga': _getHargaAsInt(),
-        'room_number': _selectedRoom!,
+        'room_number': _selectedRoomNumber,
         'check_in_date': DateFormat('yyyy-MM-dd').format(_checkInDate!),
         'check_out_date': DateFormat('yyyy-MM-dd').format(_checkOutDate!),
         'duration': _duration,
@@ -135,7 +157,7 @@ class _BookingScreenState extends State<BookingScreen> {
           builder: (context) => PaymentScreen(bookingData: bookingData),
         ),
       ).then((result) {
-        if (result == 'payment_success' && mounted) {
+        if (result == 'booking_success' && mounted) {
           Navigator.pop(context, 'booking_success');
         }
       });
@@ -268,6 +290,13 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildKostInfoCard() {
+    String alamat = '';
+    if (widget.kostData['alamat'] is Map) {
+      alamat = widget.kostData['alamat']['jalan'] ?? '';
+    } else {
+      alamat = widget.kostData['alamat']?.toString() ?? 'Alamat';
+    }
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -307,7 +336,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        widget.kostData['alamat']?.toString() ?? 'Alamat',
+                        alamat,
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -358,89 +387,93 @@ class _BookingScreenState extends State<BookingScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _availableRooms.length,
-              itemBuilder: (context, index) {
-                final room = _availableRooms[index];
-                final isSelected = _selectedRoom == room['number'];
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedRoom = room['number']),
-                  child: Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    color: isSelected
-                        ? const Color(0xFF4facfe).withOpacity(0.1)
-                        : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: isSelected
-                            ? const Color(0xFF4facfe)
-                            : Colors.grey.shade300,
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF4facfe),
-                        child: Text(
-                          room['number'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
+            
+            if (_loadingRooms)
+              const Center(child: CircularProgressIndicator())
+            else if (_availableRooms.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text("Maaf, tidak ada kamar tersedia saat ini."),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _availableRooms.length,
+                itemBuilder: (context, index) {
+                  final room = _availableRooms[index];
+                  final roomId = room['_id']?.toString();
+                  final roomNumber = room['nomor_kamar']?.toString() ?? 'Kamar ${index + 1}';
+                  final isSelected = _selectedRoomId == roomId;
+                  final hargaKamar = room['harga'] ?? 0;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedRoomId = roomId;
+                        _selectedRoomNumber = roomNumber;
+                      });
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      color: isSelected
+                          ? const Color(0xFF4facfe).withOpacity(0.1)
+                          : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: isSelected
+                              ? const Color(0xFF4facfe)
+                              : Colors.grey.shade300,
+                          width: isSelected ? 2 : 1,
                         ),
                       ),
-                      title: Text(
-                        'Kamar ${room['number']}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(
-                            '${room['floor']} â€¢ ${room['size']}mÂ² â€¢ ${room['bedType']}',
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFF4facfe),
+                          child: Text(
+                            roomNumber,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Icon(
-                                room['hasWindow']
-                                    ? Icons.check_circle
-                                    : Icons.cancel,
-                                size: 14,
-                                color: room['hasWindow']
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                              const SizedBox(width: 4),
+                        ),
+                        title: Text(
+                          'Kamar $roomNumber',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_formatHarga(hargaKamar)}/bulan',
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                            if (room['deskripsi'] != null)
                               Text(
-                                room['hasWindow']
-                                    ? 'Ada jendela'
-                                    : 'Tanpa jendela',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
+                                room['deskripsi'],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                               ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
+                        trailing: isSelected
+                            ? const Icon(
+                                Icons.check_circle,
+                                color: Color(0xFF4facfe),
+                              )
+                            : null,
                       ),
-                      trailing: isSelected
-                          ? const Icon(
-                              Icons.check_circle,
-                              color: Color(0xFF4facfe),
-                            )
-                          : null,
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
           ],
         ),
       ),

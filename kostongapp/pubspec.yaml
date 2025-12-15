@@ -19,6 +19,7 @@ dependencies:
   geolocator: ^10.1.0
   permission_handler: ^11.1.0
   shared_preferences: ^2.5.4
+  fl_chart: ^0.68.0 # ✅ DEPENDENCY DITAMBAHKAN
 
 dev_dependencies:
   flutter_test:

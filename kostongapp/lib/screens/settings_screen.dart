@@ -13,333 +13,242 @@ class SettingsScreen extends StatelessWidget {
       value: viewModel,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Pengaturan'),
+          title: const Text('Pengaturan & Privasi'),
           backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF667eea),
-          elevation: 0,
+          foregroundColor: Colors.black,
+          elevation: 1,
         ),
-        body: Consumer<ProfileTabViewModel>(
-          builder: (context, vm, child) {
-            return ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                _buildSectionTitle(context, 'Akun'),
-                _buildAccountSection(context, vm),
-                const Divider(height: 32),
-
-                _buildSectionTitle(context, 'Notifikasi'),
-                _buildNotificationSection(context),
-                const Divider(height: 32),
-
-                _buildSectionTitle(context, 'Privasi & Keamanan'),
-                _buildPrivacySection(context, vm),
-                const SizedBox(height: 16),
-                _buildDeleteAccountSection(context),
-              ],
-            );
-          },
+        body: ListView(
+          children: [
+            _buildSectionHeader(context, 'Akun'),
+            _buildListTile(
+              context,
+              title: 'Ubah Email',
+              icon: Icons.email_outlined,
+              onTap: () => _showChangeEmailDialog(context, viewModel),
+            ),
+            _buildListTile(
+              context,
+              title: 'Ubah Password',
+              icon: Icons.lock_outline,
+              onTap: () => _showChangePasswordDialog(context, viewModel),
+            ),
+            const Divider(),
+            _buildSectionHeader(context, 'Privasi'),
+            _buildSwitchTile(
+              context,
+              title: 'Profil Privat',
+              subtitle: 'Hanya tampilkan nama panggilan',
+              value: viewModel.isProfilePrivate,
+              onChanged: (value) => viewModel.setPrivacy(value),
+            ),
+            const Divider(),
+            _buildSectionHeader(context, 'Notifikasi'),
+            _buildSwitchTile(
+              context,
+              title: 'Notifikasi Chat',
+              value: true, // Placeholder
+              onChanged: (val) {},
+            ),
+            _buildSwitchTile(
+              context,
+              title: 'Info Promo',
+              value: false, // Placeholder
+              onChanged: (val) {},
+            ),
+            const Divider(),
+            _buildSectionHeader(context, 'Lainnya'),
+            _buildListTile(
+              context,
+              title: 'Syarat & Ketentuan',
+              icon: Icons.description_outlined,
+              onTap: () {},
+            ),
+            _buildListTile(
+              context,
+              title: 'Kebijakan Privasi',
+              icon: Icons.privacy_tip_outlined,
+              onTap: () {},
+            ),
+            _buildListTile(
+              context,
+              title: 'Pusat Bantuan',
+              icon: Icons.help_outline,
+              onTap: () {},
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey[600]),
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).primaryColor,
+        ),
       ),
     );
   }
 
-  Widget _buildAccountSection(BuildContext context, ProfileTabViewModel vm) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Icon(Icons.email_outlined, color: Color(0xFF667eea)),
-            title: Text('Ganti Email'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => _showChangeEmailDialog(context, vm),
-          ),
-          Divider(height: 1, indent: 16, endIndent: 16),
-          ListTile(
-            leading: Icon(Icons.lock_outline, color: Color(0xFF667eea)),
-            title: Text('Ganti Password'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => _showChangePasswordDialog(context, vm),
-          ),
-        ],
-      ),
+  Widget _buildListTile(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.grey[700]),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right, size: 20),
+      onTap: onTap,
     );
   }
 
-  Widget _buildNotificationSection(BuildContext context) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          SwitchListTile(
-            title: Text('Notifikasi Promo'),
-            value: true,
-            onChanged: (val) {},
-            secondary: Icon(Icons.campaign_outlined, color: Color(0xFF667eea)),
-          ),
-          Divider(height: 1, indent: 16, endIndent: 16),
-          SwitchListTile(
-            title: Text('Update Aplikasi'),
-            value: false,
-            onChanged: (val) {},
-            secondary: Icon(Icons.system_update_outlined, color: Color(0xFF667eea)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrivacySection(BuildContext context, ProfileTabViewModel viewModel) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
-      child: SwitchListTile(
-        title: const Text('Privasi Profil'),
-        subtitle: const Text('Sembunyikan informasi data diri'),
-        value: viewModel.isProfilePrivate,
-        onChanged: (value) => viewModel.setPrivacy(value),
-        secondary: const Icon(Icons.security_outlined, color: Color(0xFF667eea)),
-      ),
-    );
-  }
-
-  Widget _buildDeleteAccountSection(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Colors.red.withOpacity(0.05),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.red[200]!),
-      ),
-      child: ListTile(
-        leading: Icon(Icons.delete_forever_outlined, color: Colors.red),
-        title: Text('Hapus Akun', style: TextStyle(color: Colors.red)),
-        subtitle: Text('Hapus akun Anda secara permanen', style: TextStyle(color: Colors.redAccent)),
-        onTap: () => _showDeleteConfirmDialog(context),
-      ),
+  Widget _buildSwitchTile(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
+      value: value,
+      onChanged: onChanged,
+      activeColor: Theme.of(context).primaryColor,
     );
   }
 
   void _showChangeEmailDialog(BuildContext context, ProfileTabViewModel vm) {
-    final formKey = GlobalKey<FormState>();
-    final newEmailController = TextEditingController();
+    final emailController = TextEditingController(text: vm.user.email);
     final passwordController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Ganti Email'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: newEmailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email Baru',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (val) => (val?.isEmpty ?? true) || !val!.contains('@')
-                      ? 'Email tidak valid'
-                      : null,
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password Saat Ini',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  validator: (val) => (val?.isEmpty ?? true) ? 'Password tidak boleh kosong' : null,
-                ),
-              ],
+        title: const Text('Ubah Email'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: 'Email Baru'),
+              keyboardType: TextInputType.emailAddress,
             ),
-          ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              decoration: const InputDecoration(labelText: 'Konfirmasi Password'),
+              obscureText: true,
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text('Batal'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState?.validate() ?? false) {
+              if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
                 final success = await vm.changeEmail(
-                  newEmailController.text,
+                  emailController.text,
                   passwordController.text,
                 );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(success ? 'Email berhasil diubah!' : 'Gagal mengubah email.'),
+                      content: Text(success ? 'Email berhasil diubah' : 'Gagal mengubah email'),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF667eea)),
-            child: Text('Simpan'),
+            child: const Text('Simpan'),
           ),
         ],
       ),
-    ).then((_) {
-      newEmailController.dispose();
-      passwordController.dispose();
-    });
+    );
   }
 
   void _showChangePasswordDialog(BuildContext context, ProfileTabViewModel vm) {
-    final formKey = GlobalKey<FormState>();
-    final oldPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
+    final oldPassController = TextEditingController();
+    final newPassController = TextEditingController();
+    final confirmPassController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Ganti Password'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: oldPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password Saat Ini',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  validator: (val) => (val?.isEmpty ?? true) ? 'Password tidak boleh kosong' : null,
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  controller: newPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password Baru',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  validator: (val) {
-                    if (val?.isEmpty ?? true) return 'Password baru tidak boleh kosong';
-                    if (val!.length < 6) return 'Minimal 6 karakter';
-                    return null;
-                  },
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  controller: confirmPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Konfirmasi Password Baru',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  validator: (val) =>
-                      val != newPasswordController.text ? 'Password tidak cocok' : null,
-                ),
-              ],
-            ),
+        title: const Text('Ubah Password'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: oldPassController,
+                decoration: const InputDecoration(labelText: 'Password Lama'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: newPassController,
+                decoration: const InputDecoration(labelText: 'Password Baru'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: confirmPassController,
+                decoration: const InputDecoration(labelText: 'Konfirmasi Password Baru'),
+                obscureText: true,
+              ),
+            ],
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text('Batal'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState?.validate() ?? false) {
-                final success = await vm.changePassword(
-                  oldPasswordController.text,
-                  newPasswordController.text,
-                  confirmPasswordController.text,
+              if (newPassController.text != confirmPassController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password baru tidak cocok'), backgroundColor: Colors.red),
                 );
+                return;
+              }
+
+              if (oldPassController.text.isNotEmpty && newPassController.text.isNotEmpty) {
+                // ✅ PERBAIKAN: Memanggil dengan 2 argumen sesuai definisi di ViewModel
+                final success = await vm.changePassword(
+                  oldPassController.text,
+                  newPassController.text,
+                );
+                
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(success ? 'Password berhasil diubah!' : 'Gagal mengubah password.'),
+                      content: Text(success ? 'Password berhasil diubah' : 'Gagal mengubah password'),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF667eea)),
-            child: Text('Simpan'),
+            child: const Text('Simpan'),
           ),
         ],
       ),
-    ).then((_) {
-      oldPasswordController.dispose();
-      newPasswordController.dispose();
-      confirmPasswordController.dispose();
-    });
-  }
-
-  void _showDeleteConfirmDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Hapus Akun'),
-          content: const Text(
-            'Apakah Anda yakin? Tindakan ini tidak dapat dibatalkan dan semua data Anda akan dihapus.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Batal'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Ya, Hapus Akun'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                print("Account Deletion Confirmed");
-                Navigator.of(dialogContext).pop();
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

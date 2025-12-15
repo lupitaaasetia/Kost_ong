@@ -10,7 +10,6 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  // Controllers Data Diri
   final TextEditingController namaC = TextEditingController();
   final TextEditingController emailC = TextEditingController();
   final TextEditingController passC = TextEditingController();
@@ -18,18 +17,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController teleponC = TextEditingController();
   final TextEditingController tglLahirC = TextEditingController();
 
-  // Controllers Alamat (Wajib sesuai Database)
-  final TextEditingController jalanC = TextEditingController();
-  final TextEditingController kelurahanC = TextEditingController();
-  final TextEditingController kecamatanC = TextEditingController();
-  final TextEditingController kotaC = TextEditingController();
-  final TextEditingController provinsiC = TextEditingController();
-  final TextEditingController kodePosC = TextEditingController();
-
   String error = '';
   bool loading = false;
   String selectedRole = 'pencari'; 
-  String? selectedGender; // Untuk dropdown jenis kelamin
+  String? selectedGender;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   DateTime? selectedDate;
@@ -42,16 +33,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     confirmPassC.dispose();
     teleponC.dispose();
     tglLahirC.dispose();
-    jalanC.dispose();
-    kelurahanC.dispose();
-    kecamatanC.dispose();
-    kotaC.dispose();
-    provinsiC.dispose();
-    kodePosC.dispose();
     super.dispose();
   }
 
-  // Fungsi Helper Date Picker
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -70,11 +54,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (selectedGender == null) {
-      setState(() => error = 'Pilih jenis kelamin');
-      return;
-    }
-
     if (passC.text != confirmPassC.text) {
       setState(() => error = 'Password tidak cocok');
       return;
@@ -85,23 +64,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       loading = true;
     });
 
-    // Memanggil API dengan data lengkap sesuai schema Database
+    // ✅ PERBAIKAN: Memanggil API dengan argumen yang benar
     final res = await ApiService.register(
-      namaLengkap: namaC.text.trim(),
-      email: emailC.text.trim(),
-      password: passC.text,
-      noTelepon: teleponC.text.trim(),
-      role: selectedRole,
-      jenisKelamin: selectedGender!,
-      tanggalLahir: selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
-      alamat: {
-        'jalan': jalanC.text.trim(),
-        'kelurahan': kelurahanC.text.trim(),
-        'kecamatan': kecamatanC.text.trim(),
-        'kota': kotaC.text.trim(),
-        'provinsi': provinsiC.text.trim(),
-        'kode_pos': kodePosC.text.trim(),
-      },
+      namaC.text.trim(),
+      emailC.text.trim(),
+      passC.text,
+      teleponC.text.trim(),
+      selectedRole,
     );
 
     if (!mounted) return;
@@ -162,7 +131,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header
                       Icon(Icons.home_work, size: 48, color: Color(0xFF667eea)),
                       SizedBox(height: 16),
                       Text(
@@ -174,8 +142,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       SizedBox(height: 32),
-
-                      // Role Switcher
                       Container(
                         padding: EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -190,14 +156,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       SizedBox(height: 24),
-
-                      // Form Input
                       Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _sectionTitle("Data Diri"),
                             _buildTextField(controller: namaC, label: 'Nama Lengkap', icon: Icons.person),
                             SizedBox(height: 12),
                             _buildTextField(
@@ -214,54 +177,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               keyboardType: TextInputType.phone
                             ),
                             SizedBox(height: 12),
-                            
-                            // Dropdown Gender
-                            DropdownButtonFormField<String>(
-                              value: selectedGender,
-                              decoration: _inputDecoration('Jenis Kelamin', Icons.wc),
-                              items: ['Laki-laki', 'Perempuan'].map((String val) {
-                                return DropdownMenuItem(value: val, child: Text(val));
-                              }).toList(),
-                              onChanged: (v) => setState(() => selectedGender = v),
-                              validator: (v) => v == null ? 'Pilih jenis kelamin' : null,
-                            ),
-                            SizedBox(height: 12),
-
-                            // Date Picker
-                            TextFormField(
-                              controller: tglLahirC,
-                              readOnly: true,
-                              onTap: () => _selectDate(context),
-                              decoration: _inputDecoration('Tanggal Lahir', Icons.calendar_today),
-                              validator: (v) => v!.isEmpty ? 'Isi tanggal lahir' : null,
-                            ),
-                            
-                            SizedBox(height: 24),
-                            _sectionTitle("Alamat Lengkap"),
-                            
-                            // Form Alamat
-                            _buildTextField(controller: jalanC, label: 'Jalan (mis: Jl. Mawar No.1)', icon: Icons.add_road),
-                            SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(child: _buildTextField(controller: kelurahanC, label: 'Kelurahan', icon: Icons.map)),
-                                SizedBox(width: 12),
-                                Expanded(child: _buildTextField(controller: kecamatanC, label: 'Kecamatan', icon: Icons.map_outlined)),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(child: _buildTextField(controller: kotaC, label: 'Kota/Kab', icon: Icons.location_city)),
-                                SizedBox(width: 12),
-                                Expanded(child: _buildTextField(controller: provinsiC, label: 'Provinsi', icon: Icons.public)),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            _buildTextField(controller: kodePosC, label: 'Kode Pos', icon: Icons.numbers, keyboardType: TextInputType.number),
-
-                            SizedBox(height: 24),
-                            _sectionTitle("Keamanan"),
                             _buildTextField(
                               controller: passC,
                               label: 'Password',
@@ -284,9 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               validator: (v) => v != passC.text ? 'Password tidak sama' : null,
                             ),
-
                             SizedBox(height: 32),
-                            // Tombol Daftar
                             loading
                                 ? Center(child: CircularProgressIndicator())
                                 : SizedBox(
@@ -302,14 +215,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       child: Text('Daftar Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
-                            
-                            // Error
                             if (error.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: Text(error, style: TextStyle(color: Colors.red, fontSize: 14), textAlign: TextAlign.center),
                               ),
-
                             SizedBox(height: 24),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -332,13 +242,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
     );
   }
 

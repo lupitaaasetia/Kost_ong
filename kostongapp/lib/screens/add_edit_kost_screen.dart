@@ -51,40 +51,18 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
   }
 
   void _initData() {
-    String getString(String key) {
-      final value = widget.kostData?[key];
-      if (value == null) return '';
-      if (value is String) return value;
-      if (value is Map) {
-        return value['jalan'] ?? value['kota'] ?? value.toString();
-      }
-      return value.toString();
-    }
-
-    _namaKostController = TextEditingController(text: getString('nama_kost'));
-    _alamatController = TextEditingController(text: getString('alamat'));
-    _deskripsiController = TextEditingController(text: getString('deskripsi'));
-    _hargaController = TextEditingController(
-      text:
-          widget.kostData?['harga']?.toString() ??
-          widget.kostData?['harga_per_bulan']?.toString() ??
-          '',
-    );
-    _kontakController = TextEditingController(text: getString('kontak'));
+    _namaKostController = TextEditingController(text: widget.kostData?['nama_kost'] ?? '');
+    _alamatController = TextEditingController(text: widget.kostData?['alamat'] ?? '');
+    _deskripsiController = TextEditingController(text: widget.kostData?['deskripsi'] ?? '');
+    _hargaController = TextEditingController(text: widget.kostData?['harga']?.toString() ?? '');
+    _kontakController = TextEditingController(text: widget.kostData?['kontak'] ?? '');
 
     _selectedJenisKost = widget.kostData?['jenis_kost'];
     _selectedStatus = widget.kostData?['status'];
 
     final rawFasilitas = widget.kostData?['fasilitas'];
-    if (rawFasilitas != null) {
-      if (rawFasilitas is List) {
-        _selectedFasilitas = rawFasilitas.map((e) => e.toString()).toList();
-      } else if (rawFasilitas is String) {
-        _selectedFasilitas = rawFasilitas
-            .split(',')
-            .map((e) => e.trim())
-            .toList();
-      }
+    if (rawFasilitas is List) {
+      _selectedFasilitas = rawFasilitas.map((e) => e.toString()).toList();
     }
   }
 
@@ -105,6 +83,7 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
       setState(() => _loading = true);
     }
 
+    // ✅ PERBAIKAN: Menggunakan nama field yang konsisten dengan backend
     final Map<String, dynamic> data = {
       'nama_kost': _namaKostController.text,
       'alamat': _alamatController.text,
@@ -113,19 +92,15 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
       'kontak': _kontakController.text,
       'jenis_kost': _selectedJenisKost ?? 'Campur',
       'status': _selectedStatus ?? 'Tersedia',
-      'fasilitas': _selectedFasilitas.join(','),
+      'fasilitas': _selectedFasilitas,
     };
 
     try {
       Map<String, dynamic> result;
 
       if (widget.kostData != null) {
-        final id =
-            widget.kostData!['id']?.toString() ??
-            widget.kostData!['_id']?.toString();
-
+        final id = widget.kostData!['_id']?.toString();
         if (id == null) throw Exception("ID Kost tidak ditemukan");
-
         result = await ApiService.updateKost(widget.token, id, data);
       } else {
         result = await ApiService.createKost(widget.token, data);
@@ -135,11 +110,7 @@ class _AddEditKostScreenState extends State<AddEditKostScreen> {
         if (result['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                widget.kostData != null
-                    ? 'Kost diperbarui'
-                    : 'Kost ditambahkan',
-              ),
+              content: Text(widget.kostData != null ? 'Kost diperbarui' : 'Kost ditambahkan'),
               backgroundColor: Colors.green,
             ),
           );
